@@ -1,0 +1,98 @@
+/* SmokeDash Modern Dark Theme */
+
+QMainWindow {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+QWidget {
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-size: 14px;
+    color: #e0e0e0;
+}
+
+QPushButton {
+    background-color: #333333;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: #444444;
+}
+
+QPushButton#posButton {
+    background-color: #00bcd4;
+    color: #000000;
+}
+
+QPushButton#posButton:hover {
+    background-color: #26c6da;
+}
+
+QPushButton#inventoryButton {
+    background-color: #ff9800;
+    color: #000000;
+}
+
+QPushButton#inventoryButton:hover {
+    background-color: #ffa726;
+}
+
+QLineEdit {
+    background-color: #1e1e1e;
+    border: 2px solid #333333;
+    border-radius: 8px;
+    padding: 8px;
+    color: #ffffff;
+}
+
+QLineEdit:focus {
+    border: 2px solid #00bcd4;
+}
+
+QTableWidget {
+    background-color: #1e1e1e;
+    gridline-color: #333333;
+    border: none;
+    border-radius: 8px;
+}
+
+QHeaderView::section {
+    background-color: #262626;
+    padding: 10px;
+    border: none;
+    color: #888888;
+    font-weight: bold;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background: #121212;
+    width: 10px;
+}
+
+QScrollBar::handle:vertical {
+    background: #333;
+    min-height: 20px;
+    border-radius: 5px;
+}
+
+#sidebar {
+    background-color: #1a1a1a;
+    border-left: 1px solid #333;
+}
+
+#statsCard {
+    background-color: #262626;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+#totalLabel {
+    font-size: 24px;
+    font-weight: bold;
+    color: #00bcd4;
+}
