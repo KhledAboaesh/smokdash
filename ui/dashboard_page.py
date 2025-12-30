@@ -9,20 +9,20 @@ def create_dashboard_page(main_window):
     layout.setContentsMargins(30, 30, 30, 30)
     
     shop_name = main_window.settings.get('shop_name', 'سموك داش')
-    header = QLabel(f"أهلاً بك، {main_window.user_data['full_name']}")
+    header = QLabel(f"{main_window.lang.get_text('welcome')}، {main_window.user_data['full_name']}")
     header.setObjectName("welcomeLabel")
     layout.addWidget(header)
     
-    sub = QLabel("متابعة سريعة لأداء المحل اليوم")
+    sub = QLabel(main_window.lang.get_text("dashboard_sub") if main_window.lang.get_text("dashboard_sub") != "{dashboard_sub}" else "متابعة أداء المحل اليوم")
     sub.setStyleSheet("color: #8b949e; font-size: 16px; margin-bottom: 25px;")
     layout.addWidget(sub)
     
     stats_layout = QHBoxLayout()
     stats_layout.setSpacing(25)
     currency = main_window.settings.get('currency', 'LYD')
-    main_window.card_sales = create_stats_card("مبيعات اليوم", f"0.00 {currency}", "fa5s.money-bill-wave")
-    main_window.card_count = create_stats_card("عدد العمليات", "0", "fa5s.receipt")
-    main_window.card_stock = create_stats_card("الأصناف المتوفرة", "0", "fa5s.box-open")
+    main_window.card_sales = create_stats_card(main_window.lang.get_text("sales_amount"), f"0.00 {currency}", "fa5s.money-bill-wave")
+    main_window.card_count = create_stats_card(main_window.lang.get_text("transaction_count"), "0", "fa5s.receipt")
+    main_window.card_stock = create_stats_card(main_window.lang.get_text("stock_count"), "0", "fa5s.box-open")
     
     stats_layout.addWidget(main_window.card_sales)
     stats_layout.addWidget(main_window.card_count)
@@ -53,8 +53,9 @@ def create_dashboard_page(main_window):
     chart_layout.addWidget(chart_title)
     
     main_window.bars_container = QHBoxLayout()
-    main_window.bars_container.setSpacing(10)
+    main_window.bars_container.setSpacing(15)
     main_window.bars_container.setAlignment(Qt.AlignBottom)
+    main_window.bars_container.setContentsMargins(10, 20, 10, 10)
     chart_layout.addLayout(main_window.bars_container)
     
     # Stock Alerts

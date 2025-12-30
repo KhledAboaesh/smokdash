@@ -6,7 +6,8 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHBoxLayout, QPushButton, QLabel, QStackedWidget,
                              QFrame, QTableWidget, QTableWidgetItem, QHeaderView,
                              QDialog, QLineEdit, QFormLayout, QMessageBox, QDoubleSpinBox, QSpinBox,
-                             QInputDialog, QScrollArea, QCheckBox, QProgressBar, QTabWidget, QDateEdit, QComboBox, QMenu)
+                             QInputDialog, QScrollArea, QCheckBox, QProgressBar, QTabWidget, QDateEdit, QComboBox, QMenu,
+                             QToolBar, QStatusBar)
 from PySide6.QtCore import Qt, QSize, QTimer, QDate
 from PySide6.QtGui import QColor, QPixmap, QAction
 import qtawesome as qta
@@ -30,6 +31,7 @@ from ui.dashboard_page import create_dashboard_page
 from ui.pos_page import create_pos_page
 from ui.inventory_page import create_inventory_page
 from ui.customers_page import create_customers_page
+from ui.users_page import create_users_page
 from ui.product_dialog import ProductDialog
 class MainWindow(QMainWindow):
     def __init__(self, user_data, db):
@@ -66,6 +68,8 @@ class MainWindow(QMainWindow):
         self.setup_timers()
         self.setup_language_menu()
         self.update_ui_texts()
+        self.setup_statusbar()
+        self.setup_toolbar()
         self.apply_permissions()
         
         # Initial data load
@@ -142,6 +146,8 @@ class MainWindow(QMainWindow):
         self.sidebar.setObjectName("sidebar")
         self.sidebar.setFixedWidth(220)
         self.sidebar_layout = QVBoxLayout(self.sidebar)
+        self.sidebar_layout.setContentsMargins(0, 10, 0, 10)
+        self.sidebar_layout.setSpacing(5)
         self.logo_label = QLabel("SMOKEDASH")
         self.logo_label.setObjectName("logoLabel")
         self.logo_label.setAlignment(Qt.AlignCenter)
@@ -153,8 +159,9 @@ class MainWindow(QMainWindow):
         self.add_nav_button("inventory", "fa5s.boxes", 2)
         self.add_nav_button("customers", "fa5s.users", 3)
         self.add_nav_button("reports", "fa5s.chart-bar", 4)
+        self.add_nav_button("users", "fa5s.user-shield", 5)
         self.sidebar_layout.addStretch()
-        self.add_nav_button("settings", "fa5s.cog", 5)
+        self.add_nav_button("settings", "fa5s.cog", 6)
         self.main_layout.addWidget(self.sidebar)
 
         # Content Stack
@@ -167,25 +174,99 @@ class MainWindow(QMainWindow):
         self.inventory_page = create_inventory_page(self)
         self.customers_page = create_customers_page(self)
         self.reports_page = create_reports_page(self)
+        self.users_page = create_users_page(self)
         self.settings_page = create_settings_page(self)
 
-        self.content_stack.addWidget(self.dashboard_page)
-        self.content_stack.addWidget(self.pos_page)
-        self.content_stack.addWidget(self.inventory_page)
-        self.content_stack.addWidget(self.customers_page)
-        self.content_stack.addWidget(self.reports_page)
-        self.content_stack.addWidget(self.settings_page)
+        self.content_stack.addWidget(self.wrap_in_scroll(self.dashboard_page))
+        self.content_stack.addWidget(self.wrap_in_scroll(self.pos_page))
+        self.content_stack.addWidget(self.wrap_in_scroll(self.inventory_page))
+        self.content_stack.addWidget(self.wrap_in_scroll(self.customers_page))
+        self.content_stack.addWidget(self.wrap_in_scroll(self.reports_page))
+        self.content_stack.addWidget(self.wrap_in_scroll(self.users_page))
+        self.content_stack.addWidget(self.wrap_in_scroll(self.settings_page))
         
         self.set_app_direction()
 
+    def setup_toolbar(self):
+        self.toolbar = QToolBar("ERP Toolbar")
+        self.toolbar.setIconSize(QSize(24, 24))
+        self.toolbar.setMovable(False)
+        self.addToolBar(Qt.TopToolBarArea, self.toolbar)
+        
+        # Quick Actions
+        self.new_sale_act = QAction(qta.icon("fa5s.plus-circle", color="#238636"), self.lang.get_text("pos"), self)
+        self.new_sale_act.triggered.connect(lambda: self.switch_page(1))
+        
+        self.search_act = QAction(qta.icon("fa5s.search", color="#58a6ff"), self.lang.get_text("search"), self)
+        
+        self.backup_act = QAction(qta.icon("fa5s.database", color="#8b949e"), self.lang.get_text("quick_backup"), self)
+        self.backup_act.triggered.connect(self.db_backup_quick)
+        
+        self.toolbar.addAction(self.new_sale_act)
+        self.toolbar.addAction(self.search_act)
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(self.backup_act)
+
+    def setup_statusbar(self):
+        self.statusbar = QStatusBar()
+        self.setStatusBar(self.statusbar)
+        
+        # User Info
+        self.status_user = QLabel(f"👤 {self.user_data['full_name']} ({self.user_data['role']})")
+        self.status_user.setStyleSheet("margin-left: 20px; font-weight: bold; color: #58a6ff;")
+        
+        # DB Status
+        self.status_db = QLabel(f"🔌 {self.lang.get_text('db_status')}: {self.lang.get_text('db_connected')}")
+        self.status_db.setStyleSheet("margin-left: 20px; color: #238636;")
+        
+        # Time
+        self.status_time = QLabel()
+        self.status_time.setStyleSheet("margin-right: 20px; color: #8b949e;")
+        
+        self.statusbar.addWidget(self.status_user)
+        self.statusbar.addWidget(self.status_db)
+        self.statusbar.addPermanentWidget(self.status_time)
+        
+        # Timer for clock
+        self.clock_timer = QTimer(self)
+        self.clock_timer.timeout.connect(self.update_status_time)
+        self.clock_timer.start(1000)
+        self.update_status_time()
+
+    def update_status_time(self):
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.status_time.setText(now)
+
+    def db_backup_quick(self):
+        filename = self.backup_mgr.create_backup()
+        if filename:
+            QMessageBox.information(self, "نجاح", f"تم إنشاء نسخة احتياطية سريعة:\n{filename}")
+
+    def wrap_in_scroll(self, widget):
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(widget)
+        # Ensure scroll area transparent background if needed
+        scroll.setStyleSheet("background: transparent; border: none;")
+        return scroll
+
     def add_nav_button(self, key, icon, index):
         btn = QPushButton(self.lang.get_text(key))
-        btn.setIcon(qta.icon(icon, color="#e0e0e0"))
-        btn.setObjectName("navButton")
-        btn.clicked.connect(lambda: self.content_stack.setCurrentIndex(index))
+        btn.setObjectName("sidebarBtn")
+        btn.setIcon(qta.icon(icon, color="#8b949e"))
+        btn.setIconSize(QSize(20, 20))
+        btn.clicked.connect(lambda: self.switch_page(index))
         self.sidebar_layout.addWidget(btn)
         self.nav_btns[key] = btn
         return btn
+
+    def switch_page(self, index):
+        self.content_stack.setCurrentIndex(index)
+        # Update active state for buttons
+        for i, btn in enumerate(self.nav_btns.values()):
+            btn.setProperty("active", i == index)
+            btn.style().unpolish(btn)
+            btn.style().polish(btn)
     
 
     def show_advanced_reports(self):
@@ -220,12 +301,24 @@ class MainWindow(QMainWindow):
         if self.lang.set_language(lang_code):
             self.update_ui_texts()
             self.set_app_direction()
-            self.db.update_settings({"language": lang_code})
+            self.db.save_settings({"language": lang_code})
 
     def update_ui_texts(self):
         self.setWindowTitle(self.lang.get_text("app_title"))
         for key, btn in self.nav_btns.items():
             btn.setText(self.lang.get_text(key))
+            
+        # Toolbar & Statusbar
+        if hasattr(self, 'new_sale_act'):
+            self.new_sale_act.setText(self.lang.get_text("pos"))
+            self.search_act.setText(self.lang.get_text("search"))
+            self.backup_act.setText(self.lang.get_text("quick_backup"))
+            
+        if hasattr(self, 'status_db'):
+            self.status_db.setText(f"🔌 {self.lang.get_text('db_status')}: {self.lang.get_text('db_connected')}")
+            
+        # Refresh current page texts if needed
+        # (Dashboard uses main_window.lang directly so it will update on next refresh)
         # Additional logic to refresh page contents could go here
 
     def apply_permissions(self):
@@ -236,6 +329,8 @@ class MainWindow(QMainWindow):
             self.nav_btns['reports'].hide()
         if "manage_settings" not in permissions:
             self.nav_btns['settings'].hide()
+        if "manage_users" not in permissions:
+            self.nav_btns['users'].hide()
 
     def set_app_direction(self):
         if self.lang.current_language == "ar":
@@ -277,17 +372,23 @@ class MainWindow(QMainWindow):
         product = self.db.get_product_by_id(product_id)
         
         if product and product['stock'] > 0:
-            quantity, ok = QInputDialog.getInt(self, "الكمية", "أدخل الكمية:", 1, 1, product['stock'])
-            if ok:
-                total = quantity * product['price']
+            # Automatic increment instead of prompt
+            existing_item = next((i for i in self.cart_items if i['product_id'] == product_id), None)
+            if existing_item:
+                if existing_item['quantity'] < product['stock']:
+                    existing_item['quantity'] += 1
+                    existing_item['total'] = existing_item['quantity'] * existing_item['price']
+                else:
+                    QMessageBox.warning(self, "خطأ", "تم الوصول للحد الأقصى للمخزون")
+            else:
                 self.cart_items.append({
                     "product_id": product_id,
                     "name": product['name'],
-                    "quantity": quantity,
+                    "quantity": 1,
                     "price": product['price'],
-                    "total": total
+                    "total": product['price']
                 })
-                self.update_cart_table()
+            self.update_cart_table()
         else:
             QMessageBox.warning(self, "خطأ", "الكمية غير متوفرة")
 
@@ -333,6 +434,7 @@ class MainWindow(QMainWindow):
         self.clear_cart()
         self.refresh_dashboard()
         self.search_pos_products()
+        self.refresh_customers()
         QMessageBox.information(self, "تم", "تمت عملية البيع بنجاح")
 
     # Data Refresh Methods
@@ -363,6 +465,71 @@ class MainWindow(QMainWindow):
         else:
             self.shift_status_label.setText("حالة الوردية: مغلقة")
             self.shift_btn.setText("فتح وردية جديدة")
+
+        # Refresh Charts (Last 7 Days)
+        self.refresh_weekly_chart()
+        self.refresh_stock_alerts()
+
+    def refresh_weekly_chart(self):
+        # Clear existing bars
+        while self.bars_container.count():
+            item = self.bars_container.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
+            
+        sales = self.db.get_sales()
+        days_data = {}
+        for i in range(7):
+            date = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
+            days_data[date] = 0
+            
+        for s in sales:
+            date_str = s['timestamp'][:10]
+            if date_str in days_data:
+                days_data[date_str] += s['total_amount']
+        
+        max_val = max(days_data.values()) if any(days_data.values()) else 100
+        
+        for date in sorted(days_data.keys()):
+            val = days_data[date]
+            height = int((val / max_val) * 150) if val > 0 else 5
+            
+            bar_frame = QVBoxLayout()
+            bar = QFrame()
+            bar.setFixedWidth(30)
+            bar.setFixedHeight(height)
+            bar.setStyleSheet(f"background-color: {'#58a6ff' if date != datetime.now().strftime('%Y-%m-%d') else '#238636'}; border-radius: 4px;")
+            
+            label_val = QLabel(f"{val:.0f}")
+            label_val.setStyleSheet("font-size: 10px; color: #8b949e;")
+            label_val.setAlignment(Qt.AlignCenter)
+            
+            label_day = QLabel(date[8:])
+            label_day.setStyleSheet("font-size: 10px; color: #8b949e;")
+            label_day.setAlignment(Qt.AlignCenter)
+            
+            bar_frame.addWidget(label_val)
+            bar_frame.addWidget(bar)
+            bar_frame.addWidget(label_day)
+            self.bars_container.addLayout(bar_frame)
+
+    def refresh_stock_alerts(self):
+        # Clear alerts
+        while self.alerts_list.count():
+            item = self.alerts_list.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
+            
+        products = self.db.get_products()
+        low_stock = [p for p in products if p['stock'] <= 5]
+        
+        if not low_stock:
+            lbl = QLabel("جميع الأصناف متوفرة")
+            lbl.setStyleSheet("color: #238636; font-style: italic;")
+            self.alerts_list.addWidget(lbl)
+        else:
+            for p in low_stock[:5]:
+                lbl = QLabel(f"⚠️ {p['name']}: {p['stock']} علبة")
+                lbl.setStyleSheet("color: #ff5252; padding: 5px;")
+                self.alerts_list.addWidget(lbl)
 
     def refresh_inventory(self):
         products = self.db.get_products()
@@ -410,6 +577,68 @@ class MainWindow(QMainWindow):
                 self.db.update_customer_debt(customer['id'], -amount)
                 self.refresh_customers()
                 QMessageBox.information(self, "تم", "تم التحصيل بنجاح")
+
+    def refresh_users(self):
+        users = self.db.get_users()
+        self.users_table.setRowCount(0)
+        for u in users:
+            row = self.users_table.rowCount()
+            self.users_table.insertRow(row)
+            self.users_table.setItem(row, 0, QTableWidgetItem(u['username']))
+            self.users_table.setItem(row, 1, QTableWidgetItem(u.get('full_name', '-')))
+            self.users_table.setItem(row, 2, QTableWidgetItem(u.get('phone', '-')))
+            self.users_table.setItem(row, 3, QTableWidgetItem(u.get('role', 'cashier')))
+
+    def add_user_dialog(self):
+        user, ok = QInputDialog.getText(self, "موظف جديد", "اسم المستخدم:")
+        if ok and user:
+            pwd, ok2 = QInputDialog.getText(self, "موظف جديد", "كلمة المرور:")
+            if ok2:
+                fullname, ok3 = QInputDialog.getText(self, "موظف جديد", "الاسم الكامل:")
+                if ok3:
+                    phone, ok4 = QInputDialog.getText(self, "موظف جديد", "رقم الهاتف:")
+                    if ok4:
+                        roles = ["admin", "manager", "cashier"]
+                        role, ok5 = QInputDialog.getItem(self, "موظف جديد", "الدور:", roles, 2, False)
+                        if ok5:
+                            self.db.add_user({"username": user, "password": pwd, "full_name": fullname, "phone": phone, "role": role})
+                            self.refresh_users()
+
+    def open_user_drawer(self, item):
+        row = item.row()
+        username = self.users_table.item(row, 0).text()
+        user = next((u for u in self.db.get_users() if u['username'] == username), None)
+        
+        if user:
+            self.edit_u_name.setText(user['username'])
+            self.edit_u_fullname.setText(user.get('full_name', ''))
+            self.edit_u_phone.setText(user.get('phone', ''))
+            self.edit_u_role.setCurrentText(user.get('role', 'cashier'))
+            self.user_drawer.show()
+
+    def save_user_drawer(self):
+        username = self.edit_u_name.text()
+        if username == "admin":
+            QMessageBox.warning(self, "خطأ", "لا يمكن تعديل المدير العام")
+            self.user_drawer.hide()
+            return
+
+        fullname = self.edit_u_fullname.text()
+        phone = self.edit_u_phone.text()
+        role = self.edit_u_role.currentText()
+        
+        users = self.db.get_users()
+        for u in users:
+            if u['username'] == username:
+                u['full_name'] = fullname
+                u['phone'] = phone
+                u['role'] = role
+                break
+        
+        self.db._save_json(self.db.users_file, users)
+        self.refresh_users()
+        self.user_drawer.hide()
+        QMessageBox.information(self, "تم", "تم تحديث بيانات الموظف")
 
     def generate_last_invoice_pdf(self):
         sales = self.db.get_sales()

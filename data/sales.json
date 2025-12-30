@@ -49,5 +49,22 @@
         "payment_method": "Debt",
         "shift_id": "SHFT20251230174940",
         "customer_id": "CUST20251230175215"
+    },
+    {
+        "id": "20251230193724",
+        "timestamp": "2025-12-30T19:37:24.348411",
+        "items": [
+            {
+                "product_id": "20251230175116",
+                "name": "مالبورو احمر",
+                "quantity": 2,
+                "price": 2.5,
+                "total": 5.0
+            }
+        ],
+        "total_amount": 5.0,
+        "payment_method": "Cash",
+        "shift_id": "SHFT20251230174940",
+        "customer_id": null
     }
 ]

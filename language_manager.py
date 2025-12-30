@@ -39,6 +39,7 @@ class LanguageManager:
             "reports": "التقارير",
             "settings": "الإعدادات",
             "logout": "تسجيل الخروج",
+            "users": "إدارة الصلاحيات",
             "welcome": "أهلاً بك",
             "sales_amount": "مبلغ المبيعات",
             "transaction_count": "عدد العمليات",
@@ -60,7 +61,13 @@ class LanguageManager:
             "shift_status": "حالة الوردية",
             "open_shift": "فتح وردية",
             "close_shift": "إغلاق الوردية",
-            "confirm_close": "هل أنت متأكد من إغلاق الوردية؟"
+            "confirm_close": "هل أنت متأكد من إغلاق الوردية؟",
+            "dashboard_sub": "متابعة أداء المحل اليوم",
+            "stock_count": "الأصناف المتوفرة",
+            "db_status": "قاعدة البيانات",
+            "db_connected": "متصلة",
+            "db_disconnected": "غير متصلة",
+            "quick_backup": "نسخ احتياطي سريع"
         }
         
         with open("languages/ar.json", 'w', encoding='utf-8') as f:
@@ -80,6 +87,7 @@ class LanguageManager:
             "reports": "Reports",
             "settings": "Settings",
             "logout": "Logout",
+            "users": "Staff",
             "welcome": "Welcome",
             "sales_amount": "Sales Amount",
             "transaction_count": "Transactions",
@@ -101,7 +109,13 @@ class LanguageManager:
             "shift_status": "Shift Status",
             "open_shift": "Open Shift",
             "close_shift": "Close Shift",
-            "confirm_close": "Are you sure you want to close the shift?"
+            "confirm_close": "Are you sure you want to close the shift?",
+            "dashboard_sub": "Daily shop performance tracking",
+            "stock_count": "Available Items",
+            "db_status": "Database Status",
+            "db_connected": "Connected",
+            "db_disconnected": "Disconnected",
+            "quick_backup": "Quick Backup"
         }
         
         with open("languages/en.json", 'w', encoding='utf-8') as f:
