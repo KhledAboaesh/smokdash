@@ -1,418 +1,100 @@
 import sys
 import os
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QPushButton, QLabel, QStackedWidget,
                              QFrame, QTableWidget, QTableWidgetItem, QHeaderView,
-                             QDialog, QLineEdit, QFormLayout, QMessageBox, QDoubleSpinBox, QSpinBox)
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QColor
+                             QDialog, QLineEdit, QFormLayout, QMessageBox, QDoubleSpinBox, QSpinBox,
+                             QInputDialog, QScrollArea, QCheckBox, QProgressBar, QTabWidget, QDateEdit, QComboBox, QMenu)
+from PySide6.QtCore import Qt, QSize, QTimer, QDate
+from PySide6.QtGui import QColor, QPixmap, QAction
 import qtawesome as qta
+from PySide6.QtCharts import QChart, QChartView, QPieSeries
+from PySide6.QtGui import QPainter
 
+# Import all managers
 from data_manager import DataManager
-
-class ProductDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("إضافة صنف جديد")
-        self.setFixedWidth(400)
-        self.setLayoutDirection(Qt.RightToLeft)
-        self.setup_ui()
-
-    def setup_ui(self):
-        layout = QVBoxLayout(self)
-        form = QFormLayout()
-        
-        self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("أدخل اسم الصنف (مثل: مالبورو أحمر)...")
-        
-        self.brand_input = QLineEdit()
-        self.brand_input.setPlaceholderText("أدخل اسم الماركة (مثل: Philip Morris)...")
-        
-        self.price_input = QDoubleSpinBox()
-        self.price_input.setMaximum(9999.99)
-        self.price_input.setMinimum(0.01)
-        currency = self.parent().settings.get('currency', 'LYD') if self.parent() else 'LYD'
-        self.price_input.setSuffix(f" {currency}")
-        
-        self.stock_input = QSpinBox()
-        self.stock_input.setMaximum(100000)
-        self.stock_input.setValue(10)
-        
-        self.barcode_input = QLineEdit()
-        self.barcode_input.setPlaceholderText("امسح الباركود أو أدخله يدوياً...")
-        
-        form.addRow("اسم الصنف:", self.name_input)
-        form.addRow("الماركة:", self.brand_input)
-        form.addRow("سعر البيع:", self.price_input)
-        form.addRow("الكمية الأولية:", self.stock_input)
-        form.addRow("الباركود:", self.barcode_input)
-        
-        layout.addLayout(form)
-        
-        btns = QHBoxLayout()
-        save_btn = QPushButton("حفظ")
-        save_btn.clicked.connect(self.accept)
-        save_btn.setObjectName("posButton")
-        
-        cancel_btn = QPushButton("إلغاء")
-        cancel_btn.clicked.connect(self.reject)
-        
-        btns.addWidget(save_btn)
-        btns.addWidget(cancel_btn)
-        layout.addLayout(btns)
-
-    def get_data(self):
-        return {
-            "name": self.name_input.text(),
-            "brand": self.brand_input.text(),
-            "price": self.price_input.value(),
-            "stock": self.stock_input.value(),
-            "barcode": self.barcode_input.text()
-        }
-
+from backup_manager import BackupManager
+from notification_manager import NotificationManager
+from language_manager import LanguageManager
+from invoice_manager import InvoiceManager
+from user_manager import UserManager
+from update_manager import UpdateManager
+from ui.splash_screen import SplashScreen
+from ui.login_dialog import LoginDialog
+from ui.advanced_reports_dialog import AdvancedReportsDialog
+from ui.reports_page import create_reports_page
+from ui.settings_page import create_settings_page
+from ui.dashboard_page import create_dashboard_page
+from ui.pos_page import create_pos_page
+from ui.inventory_page import create_inventory_page
+from ui.customers_page import create_customers_page
+from ui.product_dialog import ProductDialog
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, user_data, db):
         super().__init__()
-        self.db = DataManager()
-        self.settings = self.db.get_settings()
+        self.user_data = user_data
+        self.db = db
+        self.settings = db.get_settings()
+
+        # Initialize Managers
+        self.backup_mgr = BackupManager()
+        self.notification_mgr = NotificationManager(self.db)
+        self.lang = LanguageManager()
+        self.invoice_mgr = InvoiceManager(self.db)
+        self.user_mgr = UserManager(self.db)
+        self.update_mgr = UpdateManager()
+
+        # Load saved language or default to 'ar'
+        saved_lang = self.settings.get('language', 'ar')
+        self.lang.set_language(saved_lang)
+
+        self.active_shift = self.db.get_active_shift(self.user_data['username'])
+        self.cart_items = []
+
+        self.setWindowTitle(self.lang.get_text("app_title"))
+        self.resize(1200, 800)
+        
+        try:
+            with open("style.qss", "r", encoding='utf-8') as f:
+                self.setStyleSheet(f.read())
+        except FileNotFoundError:
+            print("Warning: style.qss not found.")
+
         self.setup_ui()
-        self.load_styles()
-        self.refresh_inventory()
+        self.setup_timers()
+        self.setup_language_menu()
+        self.update_ui_texts()
+        self.apply_permissions()
+        
+        # Initial data load
         self.refresh_dashboard()
-        self.search_pos_products() # Show all products initially
+        self.refresh_inventory()
+        self.search_pos_products()
 
-    def setup_ui(self):
-        shop_name = self.settings.get('shop_name', 'SmokeDash')
-        self.setWindowTitle(f"{shop_name} - منظومة إدارة محل سجائر")
-        self.resize(1150, 800)
-        self.setLayoutDirection(Qt.RightToLeft)
-
-        self.central_widget = QWidget()
-        self.setCentralWidget(self.central_widget)
-        self.main_layout = QHBoxLayout(self.central_widget)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
-        self.main_layout.setSpacing(0)
-
-        self.setup_sidebar()
-
-        self.content_stack = QStackedWidget()
-        self.main_layout.addWidget(self.content_stack)
-
-        # Pages
-        self.dashboard_page = self.create_dashboard()
-        self.pos_page = self.create_pos()
-        self.inventory_page = self.create_inventory()
-        self.reports_page = self.create_reports()
-        self.settings_page = self.create_settings()
-
-        self.content_stack.addWidget(self.dashboard_page)
-        self.content_stack.addWidget(self.pos_page)
-        self.content_stack.addWidget(self.inventory_page)
-        self.content_stack.addWidget(self.reports_page)
-        self.content_stack.addWidget(self.settings_page)
-
-    def setup_sidebar(self):
-        self.sidebar = QFrame()
-        self.sidebar.setObjectName("sidebar")
-        self.sidebar.setFixedWidth(240)
-        self.sidebar_layout = QVBoxLayout(self.sidebar)
-        self.sidebar_layout.setContentsMargins(10, 30, 10, 30)
-        self.sidebar_layout.setSpacing(10)
-
-        shop_name = self.settings.get('shop_name', 'SMOKEDASH')
-        logo_label = QLabel(shop_name.upper())
-        logo_label.setObjectName("logoLabel")
-        logo_label.setAlignment(Qt.AlignCenter)
-        self.sidebar_layout.addWidget(logo_label)
-
-        self.nav_btns = []
-        self.create_nav_btn("لوحة التحكم", "fa5s.home", 0)
-        self.create_nav_btn("نقطة البيع (POS)", "fa5s.shopping-cart", 1)
-        self.create_nav_btn("إدارة المخزون", "fa5s.boxes", 2)
-        self.create_nav_btn("التقارير", "fa5s.chart-bar", 3)
-        self.sidebar_layout.addStretch()
-        self.create_nav_btn("الإعدادات", "fa5s.cog", 4)
+    def toggle_shift(self):
+        if hasattr(self, 'active_shift') and self.active_shift:
+            # Close Shift logic
+            sales = self.db.get_sales()
+            shift_sales = sum(s['total_amount'] for s in sales if s.get('shift_id') == self.active_shift['id'])
+            total_expected = self.active_shift['start_cash'] + shift_sales
+            
+            msg = f"{self.lang.get_text('confirm_close')}\n\nإجمالي مبيعات الوردية: {shift_sales:.2f}\nالمبلغ المتوقع: {total_expected:.2f}"
+            reply = QMessageBox.question(self, self.lang.get_text("close_shift"), msg, QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.db.close_shift(self.active_shift['id'], total_expected)
+                self.active_shift = None
+                QMessageBox.information(self, "تم", "تم إغلاق الوردية")
+        else:
+            # Open Shift logic
+            val, ok = QInputDialog.getDouble(self, self.lang.get_text("open_shift"), "أدخل مبلغ العهدة الابتدائي:", 0, 0, 10000, 2)
+            if ok:
+                self.active_shift = self.db.open_shift(self.user_data['username'], val)
+                QMessageBox.information(self, "تم", "تم فتح الوردية")
         
-        self.main_layout.addWidget(self.sidebar)
-
-    def create_nav_btn(self, text, icon_name, index):
-        btn = QPushButton(text)
-        btn.setIcon(qta.icon(icon_name, color="#e0e0e0"))
-        btn.setIconSize(QSize(20, 20))
-        btn.setCursor(Qt.PointingHandCursor)
-        btn.setFixedHeight(50)
-        btn.setStyleSheet("text-align: right; padding-right: 20px; font-size: 15px; border: none;")
-        if index != -1:
-            btn.clicked.connect(lambda: self.content_stack.setCurrentIndex(index))
-        self.sidebar_layout.addWidget(btn)
-        self.nav_btns.append(btn)
-        return btn
-
-    def create_dashboard(self):
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(30, 30, 30, 30)
-        
-        shop_name = self.settings.get('shop_name', 'سموك داش')
-        header = QLabel(f"أهلاً بك في {shop_name}")
-        header.setObjectName("welcomeLabel")
-        layout.addWidget(header)
-        
-        sub = QLabel("متابعة سريعة لأداء المحل اليوم")
-        sub.setStyleSheet("color: #8b949e; font-size: 16px; margin-bottom: 25px;")
-        layout.addWidget(sub)
-        
-        stats_layout = QHBoxLayout()
-        stats_layout.setSpacing(25)
-        currency = self.settings.get('currency', 'LYD')
-        self.card_sales = self.create_stats_card("مبيعات اليوم", f"0.00 {currency}", "fa5s.money-bill-wave")
-        self.card_count = self.create_stats_card("عدد العمليات", "0", "fa5s.receipt")
-        self.card_stock = self.create_stats_card("الأصناف المتوفرة", "0", "fa5s.box-open")
-        
-        stats_layout.addWidget(self.card_sales)
-        stats_layout.addWidget(self.card_count)
-        stats_layout.addWidget(self.card_stock)
-        layout.addLayout(stats_layout)
-        
-        layout.addSpacing(40)
-        recent_label = QLabel("آخر العمليات")
-        recent_label.setStyleSheet("font-size: 18px; font-weight: bold; color: #fff;")
-        layout.addWidget(recent_label)
-        
-        self.recent_table = QTableWidget(0, 3)
-        self.recent_table.setHorizontalHeaderLabels(["الوقت", "المبلغ", "طريقة الدفع"])
-        self.recent_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.recent_table.setFixedHeight(300)
-        layout.addWidget(self.recent_table)
-        
-        layout.addStretch()
-        return page
-
-    def create_stats_card(self, title, value, icon):
-        card = QFrame()
-        card.setObjectName("statsCard")
-        card_layout = QVBoxLayout(card)
-        icon_label = QLabel()
-        icon_label.setPixmap(qta.icon(icon, color="#58a6ff").pixmap(40, 40))
-        title_label = QLabel(title)
-        title_label.setStyleSheet("color: #888888; font-size: 15px; font-weight: bold;")
-        value_label = QLabel(value)
-        value_label.setObjectName("totalLabel")
-        card_layout.addWidget(icon_label)
-        card_layout.addWidget(title_label)
-        card_layout.addWidget(value_label)
-        return card
-
-    def create_pos(self):
-        page = QWidget()
-        layout = QHBoxLayout(page)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(20)
-        
-        cart_panel = QFrame()
-        cart_panel.setFixedWidth(420)
-        cart_panel.setObjectName("sidebar") # Reuse sidebar glass style
-        cart_layout = QVBoxLayout(cart_panel)
-        cart_layout.setContentsMargins(20, 20, 20, 20)
-        
-        cart_label = QLabel("سلة المشتريات")
-        cart_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #00bcd4;")
-        cart_layout.addWidget(cart_label)
-        
-        self.cart_table = QTableWidget(0, 3)
-        self.cart_table.setHorizontalHeaderLabels(["الصنف", "الكمية", "الإجمالي"])
-        self.cart_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        cart_layout.addWidget(self.cart_table)
-        
-        total_frame = QFrame()
-        total_frame.setObjectName("totalFrame")
-        total_layout = QVBoxLayout(total_frame)
-        currency = self.settings.get('currency', 'LYD')
-        self.pos_total_label = QLabel(f"الإجمالي: 0.00 {currency}")
-        self.pos_total_label.setObjectName("posTotalLabel")
-        self.pos_total_label.setAlignment(Qt.AlignCenter)
-        total_layout.addWidget(self.pos_total_label)
-        cart_layout.addWidget(total_frame)
-        
-        pay_layout = QHBoxLayout()
-        
-        self.pay_cash_btn = QPushButton("كاش (نقد)")
-        self.pay_cash_btn.setObjectName("posButton")
-        self.pay_cash_btn.setFixedHeight(60)
-        self.pay_cash_btn.clicked.connect(lambda: self.process_sale("Cash"))
-        
-        self.pay_card_btn = QPushButton("بطاقة مصرفية")
-        self.pay_card_btn.setObjectName("inventoryButton") # Use secondary color
-        self.pay_card_btn.setFixedHeight(60)
-        self.pay_card_btn.clicked.connect(lambda: self.process_sale("Card"))
-        
-        pay_layout.addWidget(self.pay_cash_btn)
-        pay_layout.addWidget(self.pay_card_btn)
-        cart_layout.addLayout(pay_layout)
-        
-        clear_btn = QPushButton("تفريغ السلة")
-        clear_btn.setFixedHeight(40)
-        clear_btn.clicked.connect(self.clear_cart)
-        cart_layout.addWidget(clear_btn)
-        
-        layout.addWidget(cart_panel)
-        
-        products_panel = QFrame()
-        products_layout = QVBoxLayout(products_panel)
-        self.pos_search = QLineEdit()
-        self.pos_search.setPlaceholderText("🔍  ابحث عن صنف أو امسح الباركود...")
-        self.pos_search.setFixedHeight(55)
-        self.pos_search.textChanged.connect(self.search_pos_products)
-        products_layout.addWidget(self.pos_search)
-        
-        self.pos_products_table = QTableWidget(0, 3)
-        self.pos_products_table.setHorizontalHeaderLabels(["الاسم", "السعر", "المتوفر"])
-        self.pos_products_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.pos_products_table.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.pos_products_table.itemDoubleClicked.connect(self.add_to_cart)
-        products_layout.addWidget(self.pos_products_table)
-        
-        layout.addWidget(products_panel)
-        self.cart_items = []
-        return page
-
-    def create_inventory(self):
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(30, 30, 30, 30)
-        header_row = QHBoxLayout()
-        header = QLabel("إدارة المخزون")
-        header.setStyleSheet("font-size: 24px; font-weight: bold; color: #fff;")
-        add_btn = QPushButton(" + إضافة صنف جديد")
-        add_btn.setObjectName("inventoryButton")
-        add_btn.setFixedWidth(180)
-        add_btn.setFixedHeight(45)
-        add_btn.clicked.connect(self.add_product_dialog)
-        header_row.addWidget(header)
-        header_row.addStretch()
-        header_row.addWidget(add_btn)
-        layout.addLayout(header_row)
-        
-        self.inventory_table = QTableWidget(0, 5)
-        self.inventory_table.setHorizontalHeaderLabels(["ID", "اسم الصنف", "الماركة", "السعر", "الكمية"])
-        self.inventory_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.inventory_table.setEditTriggers(QTableWidget.NoEditTriggers)
-        layout.addWidget(self.inventory_table)
-        return page
-
-    def create_reports(self):
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(30, 30, 30, 30)
-        header = QLabel("تقارير المبيعات")
-        header.setStyleSheet("font-size: 24px; font-weight: bold; color: #fff;")
-        layout.addWidget(header)
-        self.sales_report_table = QTableWidget(0, 4)
-        self.sales_report_table.setHorizontalHeaderLabels(["رقم العملية", "الوقت", "المبلغ الإجمالي", "طريقة الدفع"])
-        self.sales_report_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        layout.addWidget(self.sales_report_table)
-        refresh_btn = QPushButton("تحديث البيانات")
-        refresh_btn.setFixedWidth(150)
-        refresh_btn.clicked.connect(self.refresh_reports)
-        layout.addWidget(refresh_btn)
-        return page
-
-    def create_settings(self):
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(30, 30, 30, 30)
-        header = QLabel("إعدادات المنظومة")
-        header.setStyleSheet("font-size: 24px; font-weight: bold; color: #fff;")
-        layout.addWidget(header)
-        form = QFormLayout()
-        self.shop_name_input = QLineEdit()
-        self.shop_name_input.setPlaceholderText("أدخل اسم متجرك ليظهر في واجهة البرنامج...")
-        self.currency_input = QLineEdit()
-        self.currency_input.setPlaceholderText("أدخل رمز العملة المعتمد في متجرك (مثال: LYD)...")
-        form.addRow("اسم المحل:", self.shop_name_input)
-        form.addRow("العملة المستخدمة:", self.currency_input)
-        
-        # Load current settings into inputs
-        self.shop_name_input.setText(self.settings.get('shop_name', 'SmokeDash'))
-        self.currency_input.setText(self.settings.get('currency', 'LYD'))
-        
-        layout.addLayout(form)
-        save_settings_btn = QPushButton("حفظ الإعدادات")
-        save_settings_btn.setObjectName("posButton")
-        save_settings_btn.setFixedWidth(200)
-        save_settings_btn.clicked.connect(self.save_settings_action)
-        layout.addWidget(save_settings_btn)
-        layout.addStretch()
-        return page
-
-    def search_pos_products(self):
-        query = self.pos_search.text().lower()
-        products = self.db.get_products()
-        self.pos_products_table.setRowCount(0)
-        for p in products:
-            if query in p['name'].lower() or query in p.get('barcode', ''):
-                row = self.pos_products_table.rowCount()
-                self.pos_products_table.insertRow(row)
-                self.pos_products_table.setItem(row, 0, QTableWidgetItem(p['name']))
-                self.pos_products_table.item(row, 0).setData(Qt.UserRole, p['id'])
-                currency = self.settings.get('currency', 'LYD')
-                self.pos_products_table.setItem(row, 1, QTableWidgetItem(f"{p['price']:.2f} {currency}"))
-                self.pos_products_table.setItem(row, 2, QTableWidgetItem(str(p['stock'])))
-
-    def add_to_cart(self, item):
-        row = item.row()
-        product_id = self.pos_products_table.item(row, 0).data(Qt.UserRole)
-        products = self.db.get_products()
-        product = next((p for p in products if p['id'] == product_id), None)
-        if product:
-            if product['stock'] <= 0:
-                QMessageBox.warning(self, "خطأ", "هذا الصنف غير متوفر في المخزون!")
-                return
-            existing = next((item for item in self.cart_items if item['product_id'] == product_id), None)
-            if existing:
-                if existing['quantity'] >= product['stock']:
-                    QMessageBox.warning(self, "خطأ", "لا توجد كمية كافية!")
-                    return
-                existing['quantity'] += 1
-            else:
-                self.cart_items.append({"product_id": product_id, "name": product['name'], "quantity": 1, "price": product['price']})
-            self.update_cart_display()
-
-    def update_cart_display(self):
-        self.cart_table.setRowCount(0)
-        total = 0
-        currency = self.settings.get('currency', 'LYD')
-        for item in self.cart_items:
-            row = self.cart_table.rowCount()
-            self.cart_table.insertRow(row)
-            item_total = item['quantity'] * item['price']
-            total += item_total
-            self.cart_table.setItem(row, 0, QTableWidgetItem(item['name']))
-            self.cart_table.setItem(row, 1, QTableWidgetItem(str(item['quantity'])))
-            self.cart_table.setItem(row, 2, QTableWidgetItem(f"{item_total:.2f} {currency}"))
-        self.pos_total_label.setText(f"الإجمالي: {total:.2f} {currency}")
-
-    def clear_cart(self):
-        self.cart_items = []
-        self.update_cart_display()
-
-    def process_sale(self, payment_method="Cash"):
-        if not self.cart_items:
-            QMessageBox.warning(self, "خطأ", "السلة فارغة!")
-            return
-        total = sum(item['quantity'] * item['price'] for item in self.cart_items)
-        currency = self.settings.get('currency', 'LYD')
-        method_ar = "نقدًا" if payment_method == "Cash" else "بطاقة"
-        reply = QMessageBox.question(self, "تأكيد البيع", f"هل تريد إتمام عملية البيع ({method_ar}) بمبلغ {total:.2f} {currency}؟", QMessageBox.Yes | QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            self.db.add_sale(self.cart_items, total, payment_method)
-            self.clear_cart()
-            self.refresh_inventory()
-            self.refresh_dashboard()
-            self.refresh_reports()
-            self.search_pos_products()
-            QMessageBox.information(self, "تم", f"تمت عملية البيع ({method_ar}) بنجاح وتحديث المخزون.")
+        self.refresh_dashboard()
+        self.search_pos_products()
 
     def add_product_dialog(self):
         dialog = ProductDialog(self)
@@ -424,6 +106,263 @@ class MainWindow(QMainWindow):
             self.db.add_product(data)
             self.refresh_inventory()
             self.refresh_dashboard()
+            self.search_pos_products()
+
+    def edit_product_dialog(self, item):
+        row = item.row()
+        product_id = self.inventory_table.item(row, 0).text()
+        product = self.db.get_product_by_id(product_id)
+        
+        if product:
+            dialog = ProductDialog(self, product)
+            result = dialog.exec()
+            if result == QDialog.Accepted:
+                data = dialog.get_data()
+                self.db.update_product(product_id, data)
+                self.refresh_inventory()
+                self.refresh_dashboard()
+                self.search_pos_products()
+                QMessageBox.information(self, "تم", "تم التحديث")
+            elif result == 2: # Deletion
+                self.db.delete_product(product_id)
+                self.refresh_inventory()
+                self.refresh_dashboard()
+                self.search_pos_products()
+                QMessageBox.information(self, "تم", "تم الحذف")
+
+    def setup_ui(self):
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.main_layout = QHBoxLayout(self.central_widget)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+
+        # Sidebar
+        self.sidebar = QFrame()
+        self.sidebar.setObjectName("sidebar")
+        self.sidebar.setFixedWidth(220)
+        self.sidebar_layout = QVBoxLayout(self.sidebar)
+        self.logo_label = QLabel("SMOKEDASH")
+        self.logo_label.setObjectName("logoLabel")
+        self.logo_label.setAlignment(Qt.AlignCenter)
+        self.sidebar_layout.addWidget(self.logo_label)
+
+        self.nav_btns = {}
+        self.add_nav_button("dashboard", "fa5s.home", 0)
+        self.add_nav_button("pos", "fa5s.shopping-cart", 1)
+        self.add_nav_button("inventory", "fa5s.boxes", 2)
+        self.add_nav_button("customers", "fa5s.users", 3)
+        self.add_nav_button("reports", "fa5s.chart-bar", 4)
+        self.sidebar_layout.addStretch()
+        self.add_nav_button("settings", "fa5s.cog", 5)
+        self.main_layout.addWidget(self.sidebar)
+
+        # Content Stack
+        self.content_stack = QStackedWidget()
+        self.main_layout.addWidget(self.content_stack)
+
+        # Pages
+        self.dashboard_page = create_dashboard_page(self)
+        self.pos_page = create_pos_page(self)
+        self.inventory_page = create_inventory_page(self)
+        self.customers_page = create_customers_page(self)
+        self.reports_page = create_reports_page(self)
+        self.settings_page = create_settings_page(self)
+
+        self.content_stack.addWidget(self.dashboard_page)
+        self.content_stack.addWidget(self.pos_page)
+        self.content_stack.addWidget(self.inventory_page)
+        self.content_stack.addWidget(self.customers_page)
+        self.content_stack.addWidget(self.reports_page)
+        self.content_stack.addWidget(self.settings_page)
+        
+        self.set_app_direction()
+
+    def add_nav_button(self, key, icon, index):
+        btn = QPushButton(self.lang.get_text(key))
+        btn.setIcon(qta.icon(icon, color="#e0e0e0"))
+        btn.setObjectName("navButton")
+        btn.clicked.connect(lambda: self.content_stack.setCurrentIndex(index))
+        self.sidebar_layout.addWidget(btn)
+        self.nav_btns[key] = btn
+        return btn
+    
+
+    def show_advanced_reports(self):
+        dialog = AdvancedReportsDialog(self.db, self)
+        dialog.exec()
+
+    def setup_timers(self):
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.refresh_data)
+        self.timer.start(300000) # Refresh every 5 minutes
+
+    def refresh_data(self):
+        # Global refresh of all UI components
+        self.refresh_dashboard()
+        self.refresh_inventory()
+        self.refresh_customers()
+        self.search_pos_products()
+        
+    def setup_language_menu(self):
+        menubar = self.menuBar()
+        lang_menu = menubar.addMenu(self.lang.get_text("language"))
+        
+        ar_action = QAction("العربية", self)
+        ar_action.triggered.connect(lambda: self.change_language("ar"))
+        lang_menu.addAction(ar_action)
+        
+        en_action = QAction("English", self)
+        en_action.triggered.connect(lambda: self.change_language("en"))
+        lang_menu.addAction(en_action)
+
+    def change_language(self, lang_code):
+        if self.lang.set_language(lang_code):
+            self.update_ui_texts()
+            self.set_app_direction()
+            self.db.update_settings({"language": lang_code})
+
+    def update_ui_texts(self):
+        self.setWindowTitle(self.lang.get_text("app_title"))
+        for key, btn in self.nav_btns.items():
+            btn.setText(self.lang.get_text(key))
+        # Additional logic to refresh page contents could go here
+
+    def apply_permissions(self):
+        role = self.user_data.get('role', 'cashier')
+        permissions = self.user_mgr.get_role_permissions(role)
+        
+        if "view_reports" not in permissions:
+            self.nav_btns['reports'].hide()
+        if "manage_settings" not in permissions:
+            self.nav_btns['settings'].hide()
+
+    def set_app_direction(self):
+        if self.lang.current_language == "ar":
+            self.setLayoutDirection(Qt.RightToLeft)
+        else:
+            self.setLayoutDirection(Qt.LeftToRight)
+
+    def check_for_updates_action(self):
+        if self.update_mgr.check_for_updates():
+            QMessageBox.information(self, "Tحديث", "يوجد تحديث جديد متاح!")
+        else:
+            QMessageBox.information(self, "Tحديث", "أنت تستخدم أحدث إصدار.")
+
+    def create_manual_backup(self):
+        path = self.backup_mgr.backup()
+        if path:
+            QMessageBox.information(self, "نسخ احتياطي", f"تم إنشاء النسخة الاحتياطية بنجاح في:\n{path}")
+        else:
+            QMessageBox.critical(self, "خطأ", "فشل إنشاء النسخة الاحتياطية.")
+
+    # POS Logic
+    def search_pos_products(self):
+        text = self.pos_search.text().lower()
+        products = self.db.get_products()
+        filtered = [p for p in products if text in p['name'].lower() or text in p.get('id', '').lower()]
+        
+        self.pos_products_table.setRowCount(0)
+        for p in filtered:
+            row = self.pos_products_table.rowCount()
+            self.pos_products_table.insertRow(row)
+            self.pos_products_table.setItem(row, 0, QTableWidgetItem(p['name']))
+            self.pos_products_table.setItem(row, 1, QTableWidgetItem(f"{p['price']:.2f}"))
+            self.pos_products_table.setItem(row, 2, QTableWidgetItem(str(p['stock'])))
+            self.pos_products_table.item(row, 0).setData(Qt.UserRole, p['id'])
+
+    def add_to_cart(self, item):
+        row = item.row()
+        product_id = self.pos_products_table.item(row, 0).data(Qt.UserRole)
+        product = self.db.get_product_by_id(product_id)
+        
+        if product and product['stock'] > 0:
+            quantity, ok = QInputDialog.getInt(self, "الكمية", "أدخل الكمية:", 1, 1, product['stock'])
+            if ok:
+                total = quantity * product['price']
+                self.cart_items.append({
+                    "product_id": product_id,
+                    "name": product['name'],
+                    "quantity": quantity,
+                    "price": product['price'],
+                    "total": total
+                })
+                self.update_cart_table()
+        else:
+            QMessageBox.warning(self, "خطأ", "الكمية غير متوفرة")
+
+    def update_cart_table(self):
+        self.cart_table.setRowCount(0)
+        grand_total = 0
+        for item in self.cart_items:
+            row = self.cart_table.rowCount()
+            self.cart_table.insertRow(row)
+            self.cart_table.setItem(row, 0, QTableWidgetItem(item['name']))
+            self.cart_table.setItem(row, 1, QTableWidgetItem(str(item['quantity'])))
+            self.cart_table.setItem(row, 2, QTableWidgetItem(f"{item['total']:.2f}"))
+            grand_total += item['total']
+        
+        currency = self.settings.get('currency', 'LYD')
+        self.pos_total_label.setText(f"الإجمالي: {grand_total:.2f} {currency}")
+
+    def clear_cart(self):
+        self.cart_items = []
+        self.update_cart_table()
+
+    def process_sale(self, method):
+        if not self.cart_items:
+            return
+        
+        if not hasattr(self, 'active_shift') or not self.active_shift:
+            QMessageBox.warning(self, "خطأ", "يجب فتح وردية أولاً")
+            return
+
+        total = sum(item['total'] for item in self.cart_items)
+        customer_id = None
+        
+        if method == "Debt":
+            customers = self.db.get_customers()
+            names = [c['name'] for c in customers]
+            name, ok = QInputDialog.getItem(self, "اختيار عميل", "اختر العميل للدين:", names, 0, False)
+            if ok:
+                customer = next((c for c in customers if c['name'] == name), None)
+                if customer: customer_id = customer['id']
+            else: return
+
+        self.db.add_sale(self.cart_items, total, method, self.active_shift['id'], customer_id)
+        self.clear_cart()
+        self.refresh_dashboard()
+        self.search_pos_products()
+        QMessageBox.information(self, "تم", "تمت عملية البيع بنجاح")
+
+    # Data Refresh Methods
+    def refresh_dashboard(self):
+        sales = self.db.get_todays_sales()
+        total_sales = sum(s['total_amount'] for s in sales)
+        count = len(sales)
+        products = self.db.get_products()
+        total_stock = sum(p['stock'] for p in products)
+        
+        currency = self.settings.get('currency', 'LYD')
+        self.card_sales.findChild(QLabel, "totalLabel").setText(f"{total_sales:.2f} {currency}")
+        self.card_count.findChild(QLabel, "totalLabel").setText(str(count))
+        self.card_stock.findChild(QLabel, "totalLabel").setText(str(total_stock))
+        
+        self.recent_table.setRowCount(0)
+        for s in reversed(sales[-10:]):
+            row = self.recent_table.rowCount()
+            self.recent_table.insertRow(row)
+            time_str = datetime.fromisoformat(s['timestamp']).strftime("%H:%M")
+            self.recent_table.setItem(row, 0, QTableWidgetItem(time_str))
+            self.recent_table.setItem(row, 1, QTableWidgetItem(f"{s['total_amount']:.2f}"))
+            self.recent_table.setItem(row, 2, QTableWidgetItem(s['payment_method']))
+
+        if hasattr(self, 'active_shift') and self.active_shift:
+            self.shift_status_label.setText(f"حالة الوردية: مفتوحة ({self.user_data['username']})")
+            self.shift_btn.setText("إغلاق الوردية")
+        else:
+            self.shift_status_label.setText("حالة الوردية: مغلقة")
+            self.shift_btn.setText("فتح وردية جديدة")
 
     def refresh_inventory(self):
         products = self.db.get_products()
@@ -431,75 +370,87 @@ class MainWindow(QMainWindow):
         for p in products:
             row = self.inventory_table.rowCount()
             self.inventory_table.insertRow(row)
-            self.inventory_table.setItem(row, 0, QTableWidgetItem(p.get('id', '')))
-            self.inventory_table.setItem(row, 1, QTableWidgetItem(p.get('name', '')))
-            self.inventory_table.setItem(row, 2, QTableWidgetItem(p.get('brand', '')))
-            currency = self.settings.get('currency', 'LYD')
-            self.inventory_table.setItem(row, 3, QTableWidgetItem(f"{p.get('price', 0):.2f} {currency}"))
-            stock_item = QTableWidgetItem(str(p.get('stock', 0)))
-            if p.get('stock', 0) < 10: stock_item.setForeground(QColor("#ff5252"))
-            self.inventory_table.setItem(row, 4, stock_item)
+            self.inventory_table.setItem(row, 0, QTableWidgetItem(p['id']))
+            self.inventory_table.setItem(row, 1, QTableWidgetItem(p['name']))
+            self.inventory_table.setItem(row, 2, QTableWidgetItem(p.get('brand', '-')))
+            self.inventory_table.setItem(row, 3, QTableWidgetItem(f"{p['price']:.2f}"))
+            self.inventory_table.setItem(row, 4, QTableWidgetItem(str(p['stock'])))
 
-    def refresh_dashboard(self):
-        products = self.db.get_products()
+    def refresh_customers(self):
+        customers = self.db.get_customers()
+        self.customers_table.setRowCount(0)
+        for c in customers:
+            row = self.customers_table.rowCount()
+            self.customers_table.insertRow(row)
+            self.customers_table.setItem(row, 0, QTableWidgetItem(c['name']))
+            self.customers_table.setItem(row, 1, QTableWidgetItem(c['phone']))
+            self.customers_table.setItem(row, 2, QTableWidgetItem(f"{c['debt']:.2f}"))
+            self.customers_table.setItem(row, 3, QTableWidgetItem(c['created_at'][:10]))
+
+    def add_customer_dialog(self):
+        name, ok1 = QInputDialog.getText(self, "عميل جديد", "اسم العميل:")
+        if ok1 and name:
+            phone, ok2 = QInputDialog.getText(self, "عميل جديد", "رقم الهاتف:")
+            if ok2:
+                self.db.add_customer(name, phone)
+                self.refresh_customers()
+
+    def collect_debt_dialog(self):
+        customers = self.db.get_customers()
+        names = [c['name'] for c in customers if c['debt'] > 0]
+        if not names:
+            QMessageBox.information(self, "تنبيه", "لا يوجد عملاء لديهم ديون")
+            return
+        
+        name, ok = QInputDialog.getItem(self, "تحصيل دين", "اختر العميل:", names, 0, False)
+        if ok:
+            customer = next((c for c in customers if c['name'] == name), None)
+            amount, ok2 = QInputDialog.getDouble(self, "تحصيل دين", f"المبلغ المحصل (الدين الحالي: {customer['debt']:.2f}):", 0, 0, customer['debt'], 2)
+            if ok2:
+                self.db.update_customer_debt(customer['id'], -amount)
+                self.refresh_customers()
+                QMessageBox.information(self, "تم", "تم التحصيل بنجاح")
+
+    def generate_last_invoice_pdf(self):
         sales = self.db.get_sales()
-        today = datetime.now().strftime("%Y-%m-%d")
-        today_sales = sum(s['total_amount'] for s in sales if s['timestamp'].startswith(today))
-        today_count = sum(1 for s in sales if s['timestamp'].startswith(today))
-        self.card_stock.findChild(QLabel, "totalLabel").setText(str(len(products)))
-        currency = self.settings.get('currency', 'LYD')
-        self.card_sales.findChild(QLabel, "totalLabel").setText(f"{today_sales:.2f} {currency}")
-        self.card_count.findChild(QLabel, "totalLabel").setText(str(today_count))
-        self.recent_table.setRowCount(0)
-        for s in reversed(sales[-5:]):
-            row = self.recent_table.rowCount()
-            self.recent_table.insertRow(row)
-            time_str = datetime.fromisoformat(s['timestamp']).strftime("%H:%M:%S")
-            self.recent_table.setItem(row, 0, QTableWidgetItem(time_str))
-            currency = self.settings.get('currency', 'LYD')
-            self.recent_table.setItem(row, 1, QTableWidgetItem(f"{s['total_amount']:.2f} {currency}"))
-            method_ar = "نقدًا" if s['payment_method'] == "Cash" else "بطاقة"
-            self.recent_table.setItem(row, 2, QTableWidgetItem(method_ar))
+        if not sales:
+            QMessageBox.warning(self, "خطأ", "لا توجد مبيعات")
+            return
+        last_sale = sales[-1]
+        path = self.invoice_mgr.create_invoice(last_sale)
+        if path:
+            QMessageBox.information(self, "تم", f"تم إنشاء الفاتورة في:\n{path}")
+        else:
+            QMessageBox.critical(self, "خطأ", "فشل إنشاء الفاتورة")
 
-    def refresh_reports(self):
-        sales = self.db.get_sales()
-        self.sales_report_table.setRowCount(0)
-        for s in reversed(sales):
-            row = self.sales_report_table.rowCount()
-            self.sales_report_table.insertRow(row)
-            self.sales_report_table.setItem(row, 0, QTableWidgetItem(s['id']))
-            time_str = datetime.fromisoformat(s['timestamp']).strftime("%Y-%m-%d %H:%M")
-            self.sales_report_table.setItem(row, 1, QTableWidgetItem(time_str))
-            currency = self.settings.get('currency', 'LYD')
-            self.sales_report_table.setItem(row, 2, QTableWidgetItem(f"{s['total_amount']:.2f} {currency}"))
-            method_ar = "نقدًا" if s['payment_method'] == "Cash" else "بطاقة"
-            self.sales_report_table.setItem(row, 3, QTableWidgetItem(method_ar))
+    def closeEvent(self, event):
+        # Optional: Auto-backup on close
+        self.backup_mgr.backup()
+        event.accept()
 
-    def save_settings_action(self):
-        new_settings = {
-            "shop_name": self.shop_name_input.text(),
-            "currency": self.currency_input.text(),
-            "theme": self.settings.get('theme', 'dark')
-        }
-        self.db.save_settings(new_settings)
-        self.settings = new_settings
-        QMessageBox.information(self, "تم", "تم حفظ الإعدادات بنجاح. سيتم تطبيق التغييرات على بعض العناصر فوراً، وللعناصر الأخرى يرجى إعادة تشغيل البرنامج.")
-        # Apply some changes immediately
-        self.setWindowTitle(f"{new_settings['shop_name']} - منظومة إدارة محل سجائر")
-        self.sidebar.findChild(QLabel, "logoLabel").setText(new_settings['shop_name'].upper())
-        self.refresh_dashboard()
-        self.refresh_inventory()
-        self.refresh_reports()
-        self.search_pos_products()
-        self.update_cart_display()
 
-    def load_styles(self):
-        if os.path.exists("style.qss"):
-            with open("style.qss", "r") as f:
-                self.setStyleSheet(f.read())
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+    
+    # عرض شاشة التحميل
+    splash = SplashScreen()
+    splash.show()
+    
+    splash.update_progress(10, "جاري تحميل قاعدة البيانات...")
+    db = DataManager()
+    
+    splash.update_progress(30, "جاري تحميل الإعدادات...")
+    # ... بقية عملية التحميل
+    
+    splash.update_progress(100, "جاهز!")
+    splash.close()
+    
+    login = LoginDialog(db)
+    if login.exec():
+        window = MainWindow(login.user_data, db)
+        window.show()
+        sys.exit(app.exec())
+    else:
+        sys.exit(0)

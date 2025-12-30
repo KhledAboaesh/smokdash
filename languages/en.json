@@ -1,0 +1,13 @@
+{
+  "app_title": "SmokeDash - Cigarette Shop Management System",
+  "login": "Login",
+  "username": "Username",
+  "password": "Password",
+  "dashboard": "Dashboard",
+  "pos": "Point of Sale",
+  "inventory": "Inventory",
+  "customers": "Customers",
+  "reports": "Reports",
+  "settings": "Settings",
+  "logout": "Logout"
+}

@@ -1,5 +1,6 @@
 {
-    "shop_name": "SmokeDash",
+    "theme": "dark",
     "currency": "LYD",
-    "theme": "dark"
+    "shop_name": "SmokeDash",
+    "language": "ar"
 }
