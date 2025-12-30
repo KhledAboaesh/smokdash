@@ -1,1 +1,50 @@
-[]
+[
+    {
+        "id": "20251230021830",
+        "timestamp": "2025-12-30T02:18:30.160893",
+        "items": [
+            {
+                "product_id": "20251230020142",
+                "name": "مالبورو احمر",
+                "quantity": 5,
+                "price": 2.5
+            }
+        ],
+        "total_amount": 12.5,
+        "payment_method": "Cash"
+    },
+    {
+        "id": "20251230022002",
+        "timestamp": "2025-12-30T02:20:02.829185",
+        "items": [
+            {
+                "product_id": "20251230020142",
+                "name": "مالبورو احمر",
+                "quantity": 2,
+                "price": 2.5
+            }
+        ],
+        "total_amount": 5.0,
+        "payment_method": "Cash"
+    },
+    {
+        "id": "20251230024039",
+        "timestamp": "2025-12-30T02:40:39.644350",
+        "items": [
+            {
+                "product_id": "20251230020432",
+                "name": "امريكانا",
+                "quantity": 3,
+                "price": 6.0
+            },
+            {
+                "product_id": "20251230020142",
+                "name": "مالبورو احمر",
+                "quantity": 1,
+                "price": 2.5
+            }
+        ],
+        "total_amount": 20.5,
+        "payment_method": "Card"
+    }
+]

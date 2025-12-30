@@ -22,12 +22,19 @@ class DataManager:
         if not os.path.exists(self.settings_file):
             self._save_json(self.settings_file, {"theme": "dark", "currency": "LYD", "shop_name": "SmokeDash"})
 
-    def _load_json(self, file_path):
+    def get_settings(self):
+        return self._load_json(self.settings_file, dict)
+
+    def save_settings(self, settings_data):
+        self._save_json(self.settings_file, settings_data)
+        return settings_data
+
+    def _load_json(self, file_path, default_type=list):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
-            return []
+            return default_type()
 
     def _save_json(self, file_path, data):
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -35,7 +42,7 @@ class DataManager:
 
     # Products Management
     def get_products(self):
-        return self._load_json(self.products_file)
+        return self._load_json(self.products_file, list)
 
     def add_product(self, product_data):
         products = self.get_products()

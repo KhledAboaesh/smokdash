@@ -1,98 +1,171 @@
-/* SmokeDash Modern Dark Theme */
+/* SmokeDash Glassmorphism Premium Theme */
 
 QMainWindow {
-    background-color: #121212;
-    color: #e0e0e0;
+    background-color: #05070a; /* Ultra dark background */
 }
 
 QWidget {
-    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-family: 'Segoe UI', 'Inter', 'Arial', sans-serif;
     font-size: 14px;
-    color: #e0e0e0;
+    color: #e6edf3; /* Soft white for better reading */
 }
 
+/* Sidebar - Deep Glass */
+#sidebar {
+    background-color: #0d1117;
+    border-left: 1px solid #30363d;
+}
+
+#logoLabel {
+    font-size: 26px;
+    font-weight: 900;
+    color: #58a6ff;
+    letter-spacing: 3px;
+    padding: 20px 0;
+}
+
+/* Navigation Buttons - Subtle & Glassy */
 QPushButton {
-    background-color: #333333;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 12px;
+    color: #8b949e;
+    text-align: right;
 }
 
 QPushButton:hover {
-    background-color: #444444;
-}
-
-QPushButton#posButton {
-    background-color: #00bcd4;
-    color: #000000;
-}
-
-QPushButton#posButton:hover {
-    background-color: #26c6da;
-}
-
-QPushButton#inventoryButton {
-    background-color: #ff9800;
-    color: #000000;
-}
-
-QPushButton#inventoryButton:hover {
-    background-color: #ffa726;
-}
-
-QLineEdit {
-    background-color: #1e1e1e;
-    border: 2px solid #333333;
-    border-radius: 8px;
-    padding: 8px;
+    background-color: rgba(88, 166, 255, 0.1);
+    border: 1px solid #58a6ff;
     color: #ffffff;
 }
 
-QLineEdit:focus {
-    border: 2px solid #00bcd4;
+QPushButton:pressed {
+    background-color: rgba(88, 166, 255, 0.2);
 }
 
-QTableWidget {
-    background-color: #1e1e1e;
-    gridline-color: #333333;
+/* Primary Action Buttons */
+QPushButton#posButton {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1f6feb, stop:1 #58a6ff);
+    color: #ffffff;
+    font-weight: bold;
     border: none;
+    border-radius: 12px;
+}
+
+QPushButton#posButton:hover {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #388bfd, stop:1 #79c0ff);
+}
+
+QPushButton#inventoryButton {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #58a6ff;
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    font-weight: bold;
+}
+
+QPushButton#inventoryButton:hover {
+    background-color: rgba(88, 166, 255, 0.15);
+    border: 1px solid #58a6ff;
+}
+
+/* Glassy Inputs */
+QLineEdit, QDoubleSpinBox, QSpinBox {
+    background-color: rgba(13, 17, 23, 0.8);
+    border: 1px solid #30363d;
     border-radius: 8px;
+    padding: 12px;
+    color: #ffffff;
+    font-size: 15px;
+}
+
+QLineEdit:focus {
+    border: 1px solid #58a6ff;
+    background-color: #0d1117;
+}
+
+QLineEdit::placeholder {
+    color: #484f58;
+}
+
+/* Glassy Tables */
+QTableWidget {
+    background-color: transparent;
+    alternate-background-color: rgba(255, 255, 255, 0.02);
+    gridline-color: #30363d;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    color: #d0d7de;
+}
+
+QTableWidget::item {
+    padding: 10px;
+}
+
+QTableWidget::item:selected {
+    background-color: rgba(88, 166, 255, 0.15);
+    color: #58a6ff;
+    border-radius: 4px;
 }
 
 QHeaderView::section {
-    background-color: #262626;
-    padding: 10px;
+    background-color: rgba(22, 27, 34, 0.8);
+    color: #8b949e;
+    padding: 15px;
     border: none;
-    color: #888888;
+    border-bottom: 2px solid #30363d;
     font-weight: bold;
+    font-size: 12px;
 }
 
-QScrollBar:vertical {
-    border: none;
-    background: #121212;
-    width: 10px;
-}
-
-QScrollBar::handle:vertical {
-    background: #333;
-    min-height: 20px;
-    border-radius: 5px;
-}
-
-#sidebar {
-    background-color: #1a1a1a;
-    border-left: 1px solid #333;
-}
-
+/* Cards (Glass Effect) */
 #statsCard {
-    background-color: #262626;
-    border-radius: 12px;
-    padding: 20px;
+    background-color: rgba(22, 27, 34, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 25px;
+}
+
+#statsCard:hover {
+    background-color: rgba(22, 27, 34, 0.8);
+    border: 1px solid rgba(88, 166, 255, 0.4);
 }
 
 #totalLabel {
-    font-size: 24px;
+    font-size: 34px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+/* POS Specific Glass Panels */
+#totalFrame {
+    background-color: rgba(31, 111, 235, 0.1);
+    border: 1px solid rgba(31, 111, 235, 0.3);
+    border-radius: 15px;
+    margin: 15px 0;
+}
+
+#posTotalLabel {
+    font-size: 28px;
     font-weight: bold;
-    color: #00bcd4;
+    color: #58a6ff;
+}
+
+/* Dialogs */
+QDialog {
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+}
+
+QLabel#welcomeLabel {
+    color: #ffffff;
+    font-size: 30px;
+    font-weight: 800;
+    margin-bottom: 15px;
+}
+
+QFormLayout QLabel {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 15px;
 }
