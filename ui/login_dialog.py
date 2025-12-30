@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QMessageBox, QLabel, QFrame
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QMessageBox, QLabel, QFrame, QHBoxLayout
 from PySide6.QtCore import Qt
+from components.style_engine import Colors, StyleEngine
 
 class LoginDialog(QDialog):
     def __init__(self, db):
@@ -7,54 +8,111 @@ class LoginDialog(QDialog):
         self.db = db
         self.user_data = None
         self.setWindowTitle("تسجيل الدخول - SmokeDash")
-        self.setFixedWidth(450)
+        self.setFixedWidth(500)
+        self.setFixedHeight(600)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowFlags(Qt.FramelessWindowHint)
         
+        self.setup_ui()
+
+    def setup_ui(self):
         main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(50, 50, 50, 50)
         
-        # Login Card
+        # Main Premium Card
         self.card = QFrame()
         self.card.setObjectName("loginCard")
+        self.card.setStyleSheet(f"""
+            QFrame#loginCard {{
+                background-color: #161b22;
+                border: 1px solid {Colors.BORDER};
+                border-radius: 24px;
+            }}
+            QLabel#titleLabel {{
+                font-size: 32px;
+                font-weight: 900;
+                color: {Colors.ACCENT};
+                letter-spacing: 2px;
+            }}
+            QLineEdit {{
+                background-color: #0d1117;
+                border: 1px solid #30363d;
+                border-radius: 12px;
+                padding: 15px;
+                color: {Colors.TEXT_PRIMARY};
+                font-size: 16px;
+            }}
+            QLineEdit:focus {{
+                border: 1px solid {Colors.ACCENT};
+            }}
+            QPushButton#loginBtn {{
+                background-color: {Colors.ACCENT};
+                color: white;
+                border-radius: 12px;
+                font-size: 18px;
+                font-weight: bold;
+            }}
+            QPushButton#loginBtn:hover {{
+                background-color: #79c0ff;
+            }}
+        """)
+        
         card_layout = QVBoxLayout(self.card)
+        card_layout.setContentsMargins(40, 40, 40, 40)
         card_layout.setSpacing(15)
         
-        # Logo/Title
-        self.logo = QLabel("SMOKEDASH")
-        self.logo.setObjectName("loginTitle")
-        self.logo.setAlignment(Qt.AlignCenter)
-        card_layout.addWidget(self.logo)
+        # Header Section
+        header_layout = QVBoxLayout()
+        header_layout.setAlignment(Qt.AlignCenter)
         
-        self.subtitle = QLabel("المحترف لإدارة مبيعات السجائر")
-        self.subtitle.setStyleSheet("color: #8b949e; font-size: 14px; margin-bottom: 20px;")
-        self.subtitle.setAlignment(Qt.AlignCenter)
-        card_layout.addWidget(self.subtitle)
+        self.logo_lbl = QLabel("SMOKEDASH")
+        self.logo_lbl.setObjectName("titleLabel")
+        self.logo_lbl.setAlignment(Qt.AlignCenter)
         
+        self.sub_lbl = QLabel("نظام إدارة مبيعات السجائر المتطور v2.0")
+        self.sub_lbl.setStyleSheet("color: #8b949e; font-size: 14px; margin-bottom: 25px;")
+        self.sub_lbl.setAlignment(Qt.AlignCenter)
+        
+        header_layout.addWidget(self.logo_lbl)
+        header_layout.addWidget(self.sub_lbl)
+        card_layout.addLayout(header_layout)
+        
+        # Form
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("اسم المستخدم")
-        self.username_input.setFixedHeight(50)
+        self.username_input.setFixedHeight(55)
         
         self.password_input = QLineEdit()
         self.password_input.setPlaceholderText("كلمة المرور")
         self.password_input.setEchoMode(QLineEdit.Password)
-        self.password_input.setFixedHeight(50)
+        self.password_input.setFixedHeight(55)
         
         self.login_btn = QPushButton("تسجيل الدخول")
-        self.login_btn.setObjectName("loginButton")
-        self.login_btn.setFixedHeight(55)
+        self.login_btn.setObjectName("loginBtn")
+        self.login_btn.setFixedHeight(60)
         self.login_btn.clicked.connect(self.check_login)
         
-        # Close Button
-        self.close_btn = QPushButton("إغلاق")
-        self.close_btn.setStyleSheet("background: transparent; border: none; color: #8b949e; font-size: 12px;")
-        self.close_btn.clicked.connect(self.reject)
-        
+        card_layout.addWidget(QLabel("بيانات الدخول:"))
         card_layout.addWidget(self.username_input)
         card_layout.addWidget(self.password_input)
+        card_layout.addSpacing(10)
         card_layout.addWidget(self.login_btn)
-        card_layout.addWidget(self.close_btn)
+        
+        # Footer
+        footer_layout = QHBoxLayout()
+        close_btn = QPushButton("إغلاق النظام")
+        close_btn.setStyleSheet("background: transparent; color: #f85149; font-weight: bold; border: none;")
+        close_btn.clicked.connect(self.reject)
+        
+        footer_layout.addStretch()
+        footer_layout.addWidget(close_btn)
+        footer_layout.addStretch()
+        card_layout.addLayout(footer_layout)
         
         main_layout.addWidget(self.card)
+        
+        # Apply premium shadow
+        StyleEngine.apply_shadow(self.card)
 
     def check_login(self):
         username = self.username_input.text()

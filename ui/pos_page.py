@@ -62,11 +62,16 @@ class POSPage(BasePage):
         
         # Actions
         btn_box = QHBoxLayout()
-        self.pay_btn = QPushButton("دفع نقداً")
+        self.pay_btn = QPushButton(self.main_window.lang.get_text("pos_cash"))
         self.pay_btn.setObjectName("posButton")
         self.pay_btn.clicked.connect(lambda: self.main_window.process_sale("Cash"))
         
-        self.debt_btn = QPushButton("دين")
+        self.card_btn = QPushButton(self.main_window.lang.get_text("pos_card"))
+        self.card_btn.setObjectName("posButton")
+        self.card_btn.setStyleSheet("background-color: #3fb950;")
+        self.card_btn.clicked.connect(lambda: self.main_window.process_sale("Card"))
+        
+        self.debt_btn = QPushButton(self.main_window.lang.get_text("pos_debt"))
         self.debt_btn.setObjectName("inventoryButton")
         self.debt_btn.clicked.connect(lambda: self.main_window.process_sale("Debt"))
         
@@ -75,6 +80,7 @@ class POSPage(BasePage):
         self.clear_btn.clicked.connect(self.main_window.clear_cart)
         
         btn_box.addWidget(self.pay_btn)
+        btn_box.addWidget(self.card_btn)
         btn_box.addWidget(self.debt_btn)
         btn_box.addWidget(self.clear_btn)
         right_layout.addLayout(btn_box)

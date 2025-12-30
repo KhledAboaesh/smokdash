@@ -20,7 +20,7 @@ class AdvancedReportsDialog(QDialog):
         
         # Header Area
         header_frame = QFrame()
-        header_frame.setStyleSheet(f"background-color: {Colors.SIDEBAR}; border-bottom: 1px solid {Colors.BORDER};")
+        header_frame.setStyleSheet(f"background-color: {Colors.SECONDARY_BG}; border-bottom: 1px solid {Colors.BORDER};")
         header_layout = QHBoxLayout(header_frame)
         header_layout.setContentsMargins(20, 20, 20, 20)
         
@@ -64,7 +64,7 @@ class AdvancedReportsDialog(QDialog):
         
         # Actions Footer
         footer = QFrame()
-        footer.setStyleSheet(f"background-color: {Colors.SIDEBAR}; border-top: 1px solid {Colors.BORDER};")
+        footer.setStyleSheet(f"background-color: {Colors.SECONDARY_BG}; border-top: 1px solid {Colors.BORDER};")
         footer_layout = QHBoxLayout(footer)
         footer_layout.setContentsMargins(20, 15, 20, 15)
         

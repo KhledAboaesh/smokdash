@@ -37,6 +37,8 @@ from ui.users_page import UserPermissionsPage
 from ui.reports_page import ReportsPage
 from ui.settings_page import SettingsPage
 from ui.product_dialog import ProductDialog
+from ui.customer_dialog import CustomerDialog
+from ui.user_dialog import UserDialog
 from ui.splash_screen import SplashScreen
 from ui.login_dialog import LoginDialog
 
@@ -196,8 +198,22 @@ class MainWindow(QMainWindow):
         self.update_cart_ui()
 
     def process_sale(self, method):
+        customer_id = None
+        if method == "Debt":
+            # Select customer for debt
+            from PySide6.QtWidgets import QInputDialog
+            customers = self.db.get_customers()
+            names = [c['name'] for c in customers]
+            if not names:
+                QMessageBox.warning(self, "خطأ", "يجب إضافة عملاء أولاً لإجراء مبيعات آجلة.")
+                return
+            name, ok = QInputDialog.getItem(self, "اختيار عميل", "اختر العميل المعني بالدين:", names, 0, False)
+            if not ok: return
+            customer = next(c for c in customers if c['name'] == name)
+            customer_id = customer['id']
+
         shift_id = self.active_shift['id'] if self.active_shift else "manual"
-        success, msg = self.pos_ctrl.process_sale(method, shift_id)
+        success, msg = self.pos_ctrl.process_sale(method, shift_id, customer_id)
         
         if success:
             self.update_cart_ui()
@@ -240,22 +256,16 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'inventory_page'): self.inventory_page.refresh()
         if hasattr(self, 'customers_page'): self.customers_page.refresh()
         if hasattr(self, 'users_page'): self.users_page.refresh()
+        if hasattr(self, 'reports_page'): self.reports_page.refresh()
 
     # --- User Permissions Logic ---
     def add_user_dialog(self):
-        user, ok = QInputDialog.getText(self, "موظف جديد", "اسم المستخدم:")
-        if ok and user:
-            pwd, ok2 = QInputDialog.getText(self, "موظف جديد", "كلمة المرور:")
-            if ok2:
-                fullname, ok3 = QInputDialog.getText(self, "موظف جديد", "الاسم الكامل:")
-                if ok3:
-                    phone, ok4 = QInputDialog.getText(self, "موظف جديد", "رقم الهاتف:")
-                    if ok4:
-                        roles = ["admin", "manager", "cashier"]
-                        role, ok5 = QInputDialog.getItem(self, "موظف جديد", "الدور:", roles, 2, False)
-                        if ok5:
-                            self.db.add_user({"username": user, "password": pwd, "full_name": fullname, "phone": phone, "role": role})
-                            self.refresh_data()
+        dialog = UserDialog(self)
+        if dialog.exec():
+            data = dialog.get_data()
+            self.db.add_user(data)
+            self.refresh_data()
+            QMessageBox.information(self, "تم", "تمت إضافة الموظف بنجاح")
 
     def open_user_drawer(self, item):
         row = item.row()
@@ -266,6 +276,8 @@ class MainWindow(QMainWindow):
             self.users_page.edit_fullname.setText(user.get('full_name', ''))
             self.users_page.edit_phone.setText(user.get('phone', ''))
             self.users_page.edit_role.setCurrentText(user.get('role', 'cashier'))
+            if hasattr(self.users_page, 'edit_pwd'):
+                self.users_page.edit_pwd.setText(user.get('password', ''))
             self.users_page.drawer.show()
 
     def save_user_drawer(self):
@@ -279,6 +291,8 @@ class MainWindow(QMainWindow):
             "phone": self.users_page.edit_phone.text(),
             "role": self.users_page.edit_role.currentText()
         }
+        if hasattr(self.users_page, 'edit_pwd'):
+            data["password"] = self.users_page.edit_pwd.text()
         
         users = self.db.get_users()
         for u in users:
@@ -293,7 +307,9 @@ class MainWindow(QMainWindow):
     # --- Reports Logic ---
     def generate_last_invoice_pdf(self):
         sales = self.db.get_sales()
-        if not sales: return
+        if not sales:
+            QMessageBox.warning(self, self.lang.get_text("reports"), "لا يوجد عمليات بيع سابقة لإصدار فاتورة.")
+            return
         path = self.invoice_mgr.create_invoice(sales[-1])
         if path: QMessageBox.information(self, "تم", f"تم حفظ الفاتورة في:\n{path}")
 
@@ -350,28 +366,40 @@ class MainWindow(QMainWindow):
 
     # --- CRM Logic ---
     def add_customer_dialog(self):
-        name, ok1 = QInputDialog.getText(self, "عميل جديد", "اسم العميل:")
-        if ok1 and name:
-            phone, ok2 = QInputDialog.getText(self, "عميل جديد", "رقم الهاتف:")
-            if ok2:
-                self.db.add_customer(name, phone)
+        dialog = CustomerDialog(self)
+        if dialog.exec():
+            self.db.add_customer(dialog.get_data())
+            self.refresh_data()
+            QMessageBox.information(self, "تم", "تمت إضافة العميل بنجاح")
+
+    def edit_customer_dialog(self, item):
+        row = item.row()
+        customer_id = self.customers_page.table.item(row, 0).text()
+        customer = next((c for c in self.db.get_customers() if c['id'] == customer_id), None)
+        if customer:
+            dialog = CustomerDialog(self, customer)
+            if dialog.exec():
+                self.db.update_customer(customer_id, dialog.get_data())
                 self.refresh_data()
+                QMessageBox.information(self, "تم", "تم تحديث بيانات العميل")
 
     def collect_debt_dialog(self):
         customers = [c for c in self.db.get_customers() if c['debt'] > 0]
         if not customers:
-            QMessageBox.information(self, "تنبيه", "لا يوجد ديون مستحقة")
+            QMessageBox.information(self, self.lang.get_text("reports"), "لا يوجد ديون مستحقة!")
             return
         
         names = [c['name'] for c in customers]
-        name, ok = QInputDialog.getItem(self, "تحصيل دين", "اختر العميل:", names, 0, False)
+        name, ok = QInputDialog.getItem(self, self.lang.get_text("collect_debt"), "اختر العميل:", names, 0, False)
         if ok:
             customer = next(c for c in customers if c['name'] == name)
-            amount, ok2 = QInputDialog.getDouble(self, "تحصيل دين", f"المبلغ المستلم (الدين: {customer['debt']:.2f}):", 0, 0, customer['debt'], 2)
+            amount, ok2 = QInputDialog.getDouble(self, self.lang.get_text("collect_debt"), 
+                                                 f"المبلغ المستلم (الدين الحالي: {customer['debt']:.2f}):", 
+                                                 0, 0, customer['debt'], 2)
             if ok2:
                 self.db.update_customer_debt(customer['id'], -amount)
                 self.refresh_data()
-                QMessageBox.information(self, "تم", "تم التحصيل")
+                QMessageBox.information(self, "تم", "تم تحصيل المبلغ وتحديث سجل العميل بنجاح")
 
     def set_app_direction(self):
         direction = Qt.RightToLeft if self.lang.current_language == "ar" else Qt.LeftToRight

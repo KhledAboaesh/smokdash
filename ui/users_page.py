@@ -28,8 +28,17 @@ class UserPermissionsPage(BasePage):
         actions_layout.addWidget(self.add_btn)
         table_layout.addLayout(actions_layout)
         
-        self.table = QTableWidget(0, 4)
-        self.table.setHorizontalHeaderLabels(["اسم المستخدم", "الاسم الكامل", "الهاتف", "الدور"])
+        headers = [
+            self.main_window.lang.get_text("username"),
+            self.main_window.lang.get_text("full_name"),
+            self.main_window.lang.get_text("phone"),
+            self.main_window.lang.get_text("role")
+        ]
+        if self.main_window.user_data['role'] == 'admin':
+            headers.append(self.main_window.lang.get_text("password_show"))
+            
+        self.table = QTableWidget(0, len(headers))
+        self.table.setHorizontalHeaderLabels(headers)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -61,10 +70,15 @@ class UserPermissionsPage(BasePage):
         self.edit_role = QComboBox()
         self.edit_role.addItems(["admin", "manager", "cashier"])
         
-        self.form.addRow("اسم المستخدم:", self.edit_name)
-        self.form.addRow("الاسم الكامل:", self.edit_fullname)
-        self.form.addRow("رقم الهاتف:", self.edit_phone)
-        self.form.addRow("الدور:", self.edit_role)
+        self.form.addRow(self.main_window.lang.get_text("username") + ":", self.edit_name)
+        self.form.addRow(self.main_window.lang.get_text("full_name") + ":", self.edit_fullname)
+        self.form.addRow(self.main_window.lang.get_text("phone") + ":", self.edit_phone)
+        self.form.addRow(self.main_window.lang.get_text("role") + ":", self.edit_role)
+        
+        if self.main_window.user_data['role'] == 'admin':
+            self.edit_pwd = QLineEdit()
+            self.form.addRow(self.main_window.lang.get_text("password_show") + ":", self.edit_pwd)
+            
         drawer_layout.addLayout(self.form)
         
         save_btn = QPushButton("حفظ التغييرات")
@@ -83,6 +97,7 @@ class UserPermissionsPage(BasePage):
 
     def refresh(self):
         users = self.main_window.db.get_users()
+        is_admin = self.main_window.user_data['role'] == 'admin'
         self.table.setRowCount(0)
         for u in users:
             row = self.table.rowCount()
@@ -91,3 +106,5 @@ class UserPermissionsPage(BasePage):
             self.table.setItem(row, 1, QTableWidgetItem(u.get('full_name', '-')))
             self.table.setItem(row, 2, QTableWidgetItem(u.get('phone', '-')))
             self.table.setItem(row, 3, QTableWidgetItem(u.get('role', 'cashier')))
+            if is_admin:
+                self.table.setItem(row, 4, QTableWidgetItem(u.get('password', '****')))

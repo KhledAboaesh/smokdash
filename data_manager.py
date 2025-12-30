@@ -246,12 +246,13 @@ class DataManager:
         if use_cache: self.cache.set("customers", customers)
         return customers
 
-    def add_customer(self, name, phone=""):
+    def add_customer(self, data):
         customers = self.get_customers(use_cache=False)
         new_customer = {
             "id": datetime.now().strftime("CUST%Y%m%d%H%M%S"),
-            "name": name,
-            "phone": phone,
+            "name": data.get('name', 'N/A'),
+            "phone": data.get('phone', ''),
+            "address": data.get('address', ''),
             "debt": 0.0,
             "created_at": datetime.now().isoformat()
         }
@@ -259,6 +260,15 @@ class DataManager:
         self._save_json(self.customers_file, customers)
         self.cache.set("customers", customers)
         return new_customer
+
+    def update_customer(self, customer_id, data):
+        customers = self.get_customers(use_cache=False)
+        for c in customers:
+            if c['id'] == customer_id:
+                c.update(data)
+                break
+        self._save_json(self.customers_file, customers)
+        self.cache.set("customers", customers)
 
     def update_customer_debt(self, customer_id, amount_change):
         customers = self.get_customers(use_cache=False)
