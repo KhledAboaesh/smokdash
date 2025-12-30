@@ -1,63 +1,80 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame, QPushButton, QComboBox
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, QComboBox
 from PySide6.QtCore import Qt
+from ui.base_page import BasePage
+from components.style_engine import Colors
 
-def create_settings_page(main_window):
-    page = QWidget()
-    layout = QVBoxLayout(page)
-    layout.setAlignment(Qt.AlignTop)
-    layout.setContentsMargins(20, 20, 20, 20)
-    header = QLabel("Application Settings")
-    header.setObjectName("welcomeLabel")
-    layout.addWidget(header)
-    # Language Section
-    lang_group = QFrame()
-    lang_group.setObjectName("statsCard")
-    lang_layout = QVBoxLayout(lang_group)
-    lang_header = QLabel(main_window.lang.get_text("language"))
-    lang_header.setStyleSheet("font-size: 16px; font-weight: bold; color: #58a6ff;")
-    
-    lang_combo = QComboBox()
-    lang_combo.addItem("العربية", "ar")
-    lang_combo.addItem("English", "en")
-    
-    # Set current index based on current language
-    current_lang = main_window.lang.current_language
-    index = lang_combo.findData(current_lang)
-    if index >= 0:
-        lang_combo.setCurrentIndex(index)
+class SettingsPage(BasePage):
+    def __init__(self, main_window):
+        title = main_window.lang.get_text("settings")
+        subtitle = "تخصيص الخيارات، اللغة، وإدارة النظام"
+        super().__init__(main_window, title, subtitle)
+        self.setup_ui()
+
+    def setup_ui(self):
+        # Language Section
+        lang_group = QFrame()
+        lang_group.setObjectName("statsCard")
+        lang_layout = QVBoxLayout(lang_group)
+        lang_layout.setContentsMargins(20, 20, 20, 20)
         
-    lang_combo.currentIndexChanged.connect(lambda i: main_window.change_language(lang_combo.itemData(i)))
-    
-    lang_layout.addWidget(lang_header)
-    lang_layout.addWidget(lang_combo)
-    layout.addWidget(lang_group)
+        lang_header = QLabel(self.main_window.lang.get_text("language"))
+        lang_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT}; margin-bottom: 10px;")
+        
+        self.lang_combo = QComboBox()
+        self.lang_combo.addItem("العربية", "ar")
+        self.lang_combo.addItem("English", "en")
+        
+        current_lang = self.main_window.lang.current_language
+        index = self.lang_combo.findData(current_lang)
+        if index >= 0: self.lang_combo.setCurrentIndex(index)
+        
+        self.lang_combo.currentIndexChanged.connect(lambda i: self.main_window.change_language(self.lang_combo.itemData(i)))
+        
+        lang_layout.addWidget(lang_header)
+        lang_layout.addWidget(self.lang_combo)
+        self.add_widget(lang_group)
+        
+        # Backup & Update Section Row
+        backup_layout = QHBoxLayout()
+        backup_layout.setSpacing(20)
+        
+        # Backup Section
+        backup_group = QFrame()
+        backup_group.setObjectName("statsCard")
+        bl = QVBoxLayout(backup_group)
+        bl.setContentsMargins(20, 20, 20, 20)
+        
+        backup_header = QLabel("النسخ الاحتياطي")
+        backup_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT};")
+        self.backup_btn = QPushButton("إنشاء نسخة احتياطية يدوية")
+        self.backup_btn.setObjectName("posButton")
+        self.backup_btn.setFixedHeight(40)
+        self.backup_btn.clicked.connect(self.main_window.create_manual_backup)
+        
+        bl.addWidget(backup_header)
+        bl.addWidget(self.backup_btn)
+        
+        # Update Section
+        update_group = QFrame()
+        update_group.setObjectName("statsCard")
+        ul = QVBoxLayout(update_group)
+        ul.setContentsMargins(20, 20, 20, 20)
+        
+        update_header = QLabel("تحديثات النظام")
+        update_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT};")
+        self.update_btn = QPushButton("التحقق من وجود تحديثات")
+        self.update_btn.setObjectName("inventoryButton")
+        self.update_btn.setFixedHeight(40)
+        self.update_btn.clicked.connect(self.main_window.check_for_updates_action)
+        
+        ul.addWidget(update_header)
+        ul.addWidget(self.update_btn)
+        
+        backup_layout.addWidget(backup_group)
+        backup_layout.addWidget(update_group)
+        self.add_layout(backup_layout)
+        
+        self.layout.addStretch()
 
-    # Backup Section
-    backup_group = QFrame()
-    backup_group.setObjectName("statsCard")
-    backup_layout = QVBoxLayout(backup_group)
-    backup_header = QLabel(main_window.lang.get_text("backup"))
-    backup_header.setStyleSheet("font-size: 16px; font-weight: bold; color: #58a6ff;")
-    
-    create_backup_btn = QPushButton(main_window.lang.get_text("create_backup"))
-    create_backup_btn.setObjectName("posButton")
-    create_backup_btn.clicked.connect(main_window.create_manual_backup)
-    
-    backup_layout.addWidget(backup_header)
-    backup_layout.addWidget(create_backup_btn)
-    layout.addWidget(backup_group)
-
-    # Update Section
-    update_group = QFrame()
-    update_group.setObjectName("statsCard")
-    update_layout = QVBoxLayout(update_group)
-    update_header = QLabel(main_window.lang.get_text("check_updates"))
-    update_header.setStyleSheet("font-size: 16px; font-weight: bold; color: #58a6ff;")
-    check_update_btn = QPushButton(main_window.lang.get_text("check_updates"))
-    check_update_btn.setObjectName("posButton")
-    check_update_btn.clicked.connect(main_window.check_for_updates_action)
-    update_layout.addWidget(update_header)
-    update_layout.addWidget(check_update_btn)
-    layout.addWidget(update_group)
-    
-    return page
+    def refresh(self):
+        pass

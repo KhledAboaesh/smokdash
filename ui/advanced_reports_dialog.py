@@ -1,277 +1,175 @@
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QTabWidget, QWidget, 
                              QHBoxLayout, QPushButton, QLabel, QTableWidget, 
-                             QDateEdit, QSpinBox, QComboBox)
-from PySide6.QtCore import QDate
+                             QDateEdit, QSpinBox, QComboBox, QFrame, QTableWidgetItem)
+from PySide6.QtCore import QDate, Qt
+from components.style_engine import Colors, StyleEngine
 
 class AdvancedReportsDialog(QDialog):
     def __init__(self, db, parent=None):
         super().__init__(parent)
         self.db = db
-        self.setWindowTitle("تقارير متقدمة")
-        self.setMinimumSize(900, 700)
+        self.setWindowTitle("التقارير المتقدمة والتحليلات")
+        self.setMinimumSize(1000, 750)
+        self.setLayoutDirection(Qt.RightToLeft)
         self.setup_ui()
     
     def setup_ui(self):
-        layout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         
-        # تبويبات للتقارير المختلفة
-        self.tabs = QTabWidget()
-        self.tabs.currentChanged.connect(self.on_tab_changed)
+        # Header Area
+        header_frame = QFrame()
+        header_frame.setStyleSheet(f"background-color: {Colors.SIDEBAR}; border-bottom: 1px solid {Colors.BORDER};")
+        header_layout = QHBoxLayout(header_frame)
+        header_layout.setContentsMargins(20, 20, 20, 20)
         
-        # تقرير المبيعات اليومية
-        self.daily_sales_tab = self.create_daily_sales_tab()
-        self.tabs.addTab(self.daily_sales_tab, "المبيعات اليومية")
-        self.refresh_daily_sales() # Add this
+        title_lbl = QLabel("تحليلات الأداء والتقارير")
+        title_lbl.setStyleSheet(f"font-size: 22px; font-weight: 800; color: {Colors.ACCENT};")
+        header_layout.addWidget(title_lbl)
+        header_layout.addStretch()
         
-        # تقرير المنتجات الأكثر مبيعاً
-        self.top_products_tab = self.create_top_products_tab()
-        self.tabs.addTab(self.top_products_tab, "المنتجات الأكثر مبيعاً")
-        self.refresh_top_products() # Add this
-        
-        # تقرير طرق الدفع
-        self.payment_methods_tab = self.create_payment_methods_tab()
-        self.tabs.addTab(self.payment_methods_tab, "طرق الدفع")
-        
-        layout.addWidget(self.tabs)
-        
-        # أزرار التحكم
-        btn_layout = QHBoxLayout()
-        export_btn = QPushButton("تصدير التقرير")
-        export_btn.setObjectName("posButton")
-        export_btn.clicked.connect(self.export_report)
-        
-        print_btn = QPushButton("طباعة")
-        print_btn.clicked.connect(self.print_report)
-        
-        close_btn = QPushButton("إغلاق")
+        close_btn = QPushButton("×")
+        close_btn.setFixedSize(30, 30)
+        close_btn.setStyleSheet("background: transparent; font-size: 24px; color: #8b949e;")
         close_btn.clicked.connect(self.reject)
+        header_layout.addWidget(close_btn)
         
-        btn_layout.addWidget(export_btn)
-        btn_layout.addWidget(print_btn)
-        btn_layout.addStretch()
-        btn_layout.addWidget(close_btn)
+        main_layout.addWidget(header_frame)
         
-        layout.addLayout(btn_layout)
-    
+        # Tabs
+        self.tabs = QTabWidget()
+        self.tabs.setStyleSheet(f"""
+            QTabWidget::pane {{ border: none; background-color: {Colors.BACKGROUND}; }}
+            QTabBar::tab {{
+                background: transparent;
+                color: #8b949e;
+                padding: 12px 30px;
+                font-size: 14px;
+                font-weight: 600;
+            }}
+            QTabBar::tab:selected {{
+                color: {Colors.ACCENT};
+                border-bottom: 2px solid {Colors.ACCENT};
+            }}
+        """)
+        
+        self.daily_tab = self.create_daily_sales_tab()
+        self.top_products_tab = self.create_top_products_tab()
+        
+        self.tabs.addTab(self.daily_tab, "المبيعات اليومية")
+        self.tabs.addTab(self.top_products_tab, "الأصناف الأكثر طلباً")
+        
+        main_layout.addWidget(self.tabs)
+        
+        # Actions Footer
+        footer = QFrame()
+        footer.setStyleSheet(f"background-color: {Colors.SIDEBAR}; border-top: 1px solid {Colors.BORDER};")
+        footer_layout = QHBoxLayout(footer)
+        footer_layout.setContentsMargins(20, 15, 20, 15)
+        
+        export_btn = QPushButton("تصدير إلى Excel")
+        export_btn.setObjectName("posButton")
+        export_btn.setFixedHeight(40)
+        
+        footer_layout.addWidget(export_btn)
+        footer_layout.addStretch()
+        main_layout.addWidget(footer)
+
     def create_daily_sales_tab(self):
         tab = QWidget()
         layout = QVBoxLayout(tab)
+        layout.setContentsMargins(25, 25, 25, 25)
         
-        # اختيار نطاق تاريخي
-        date_layout = QHBoxLayout()
-        date_layout.addWidget(QLabel("من:"))
+        # Filter Bar
+        filters = QFrame()
+        filters.setObjectName("statsCard")
+        fl = QHBoxLayout(filters)
+        
         self.start_date = QDateEdit()
-        self.start_date.setDate(QDate.currentDate().addDays(-30))
-        date_layout.addWidget(self.start_date)
-        
-        date_layout.addWidget(QLabel("إلى:"))
+        self.start_date.setDate(QDate.currentDate().addDays(-7))
         self.end_date = QDateEdit()
         self.end_date.setDate(QDate.currentDate())
-        date_layout.addWidget(self.end_date)
         
-        refresh_btn = QPushButton("تحديث")
+        refresh_btn = QPushButton("تطبيق الفلتر")
+        refresh_btn.setObjectName("inventoryButton")
         refresh_btn.clicked.connect(self.refresh_daily_sales)
-        date_layout.addWidget(refresh_btn)
         
-        layout.addLayout(date_layout)
+        fl.addWidget(QLabel("من:"))
+        fl.addWidget(self.start_date)
+        fl.addWidget(QLabel("إلى:"))
+        fl.addWidget(self.end_date)
+        fl.addStretch()
+        fl.addWidget(refresh_btn)
         
-        # جدول المبيعات اليومية
-        self.daily_sales_table = QTableWidget()
-        self.daily_sales_table.setColumnCount(3)
-        self.daily_sales_table.setHorizontalHeaderLabels(["التاريخ", "عدد العمليات", "إجمالي المبيعات"])
-        layout.addWidget(self.daily_sales_table)
+        layout.addWidget(filters)
         
-        # مخطط بياني
-        self.chart_widget = QWidget()
-        layout.addWidget(self.chart_widget)
+        # Content Split (Table + Placeholder for chart)
+        content = QHBoxLayout()
+        self.daily_table = QTableWidget(0, 3)
+        self.daily_table.setHorizontalHeaderLabels(["التاريخ", "العمليات", "الإجمالي"])
+        content.addWidget(self.daily_table, 1)
         
+        chart_mock = QFrame()
+        chart_mock.setObjectName("statsCard")
+        chart_mock.setStyleSheet("background-color: rgba(88, 166, 255, 0.05);")
+        chart_mock_layout = QVBoxLayout(chart_mock)
+        chart_mock_layout.addWidget(QLabel("مساحة الرسم البياني للمبيعات"), 0, Qt.AlignCenter)
+        content.addWidget(chart_mock, 1)
+        
+        layout.addLayout(content)
+        self.refresh_daily_sales()
         return tab
-    
-    def refresh_daily_sales(self):
-        start_date = self.start_date.date().toPython()
-        end_date = self.end_date.date().toPython()
-        
-        # جلب البيانات من قاعدة البيانات
-        sales = self.db.get_sales_by_date_range(start_date, end_date)
-        
-        # معالجة البيانات وعرضها
-        daily_stats = {}
-        for sale in sales:
-            sale_date = QDate.fromString(sale['timestamp'].split('T')[0], "yyyy-MM-dd") # Assuming timestamp is ISO format
-            if sale_date not in daily_stats:
-                daily_stats[sale_date] = {'count': 0, 'total': 0.0}
-            daily_stats[sale_date]['count'] += 1
-            daily_stats[sale_date]['total'] += sale['total_amount']
 
-        self.daily_sales_table.setRowCount(len(daily_stats))
-        row = 0
-        for date, stats in sorted(daily_stats.items(), key=lambda x: x[0]):
-            self.daily_sales_table.setItem(row, 0, QTableWidgetItem(date.toString("yyyy-MM-dd")))
-            self.daily_sales_table.setItem(row, 1, QTableWidgetItem(str(stats['count'])))
-            self.daily_sales_table.setItem(row, 2, QTableWidgetItem(f"{stats['total']:.2f}"))
-            row += 1
-        
-        # تحديث الجدول
-        self.daily_sales_table.setRowCount(0)
-        
-        # تحديث المخطط
-        self.update_chart(sales)
-    
-    def update_chart(self, sales_data):
-        """تحديث المخطط البياني"""
-        # تنفيذ عرض مخطط بياني باستخدام QtCharts أو مكتبة خارجية
-        pass
-    
     def create_top_products_tab(self):
         tab = QWidget()
         layout = QVBoxLayout(tab)
+        layout.setContentsMargins(25, 25, 25, 25)
         
-        # إعدادات التقرير
-        settings_layout = QHBoxLayout()
-        settings_layout.addWidget(QLabel("عدد المنتجات:"))
-        self.top_count = QSpinBox()
-        self.top_count.setRange(5, 50)
-        self.top_count.setValue(10)
-        settings_layout.addWidget(self.top_count)
+        self.top_table = QTableWidget(0, 4)
+        self.top_table.setHorizontalHeaderLabels(["الصنف", "الكمية المباعة", "الإيرادات", "النسبة"])
+        layout.addWidget(self.top_table)
         
-        settings_layout.addWidget(QLabel("الفترة:"))
-        self.period_combo = QComboBox()
-        self.period_combo.addItems(["أسبوع", "شهر", "ربع سنة", "سنة"])
-        settings_layout.addWidget(self.period_combo)
-        
-        refresh_btn = QPushButton("تحديث")
-        refresh_btn.clicked.connect(self.refresh_top_products)
-        settings_layout.addWidget(refresh_btn)
-        
-        layout.addLayout(settings_layout)
-        
-        # جدول المنتجات الأكثر مبيعاً
-        self.top_products_table = QTableWidget()
-        self.top_products_table.setColumnCount(4)
-        self.top_products_table.setHorizontalHeaderLabels(["المنتج", "الكمية المباعة", "الإيرادات", "النسبة"])
-        layout.addWidget(self.top_products_table)
-        
+        self.refresh_top_products()
         return tab
-    
+
+    def refresh_daily_sales(self):
+        # Implementation of data aggregation logic
+        sales = self.db.get_sales_by_date_range(self.start_date.date().toPython(), self.end_date.date().toPython())
+        stats = {}
+        for s in sales:
+            d = s['timestamp'].split('T')[0]
+            if d not in stats: stats[d] = {'count': 0, 'total': 0.0}
+            stats[d]['count'] += 1
+            stats[d]['total'] += s['total_amount']
+            
+        self.daily_table.setRowCount(0)
+        for d, data in sorted(stats.items(), reverse=True):
+            row = self.daily_table.rowCount()
+            self.daily_table.insertRow(row)
+            self.daily_table.setItem(row, 0, QTableWidgetItem(d))
+            self.daily_table.setItem(row, 1, QTableWidgetItem(str(data['count'])))
+            self.daily_table.setItem(row, 2, QTableWidgetItem(f"{data['total']:.2f}"))
+
     def refresh_top_products(self):
-        top_count = self.top_count.value()
-        period = self.period_combo.currentText() # Will use this later for filtering
-
         sales = self.db.get_sales()
-        product_stats = {}
-
-        for sale in sales:
-            for item in sale['items']:
-                product_id = item['product_id']
-                product_name = item['name']
-                quantity = item['quantity']
-                price = item['price']
-                
-                if product_id not in product_stats:
-                    product_stats[product_id] = {'name': product_name, 'quantity_sold': 0, 'revenue': 0.0}
-                
-                product_stats[product_id]['quantity_sold'] += quantity
-                product_stats[product_id]['revenue'] += quantity * price
+        prod_stats = {}
+        for s in sales:
+            for item in s['items']:
+                pid = item['product_id']
+                if pid not in prod_stats: prod_stats[pid] = {'name': item['name'], 'qty': 0, 'rev': 0.0}
+                prod_stats[pid]['qty'] += item['quantity']
+                prod_stats[pid]['rev'] += item['total']
         
-        # Sort by revenue for "top products"
-        sorted_products = sorted(product_stats.values(), key=lambda x: x['revenue'], reverse=True)
+        sorted_stats = sorted(prod_stats.values(), key=lambda x: x['rev'], reverse=True)
+        total_rev = sum(p['rev'] for p in sorted_stats)
         
-        self.top_products_table.setRowCount(min(top_count, len(sorted_products)))
-        
-        total_revenue_all_products = sum(p['revenue'] for p in sorted_products)
-
-        row = 0
-        for product in sorted_products[:top_count]:
-            self.top_products_table.setItem(row, 0, QTableWidgetItem(product['name']))
-            self.top_products_table.setItem(row, 1, QTableWidgetItem(str(product['quantity_sold'])))
-            self.top_products_table.setItem(row, 2, QTableWidgetItem(f"{product['revenue']:.2f}"))
-            
-            percentage = (product['revenue'] / total_revenue_all_products * 100) if total_revenue_all_products > 0 else 0
-            self.top_products_table.setItem(row, 3, QTableWidgetItem(f"{percentage:.2f}%"))
-            row += 1
-    
-    def create_payment_methods_tab(self):
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        
-        # مخطط دائري لطرق الدفع
-        self.payment_chart_widget = QWidget()
-        layout.addWidget(self.payment_chart_widget)
-        
-        # جدول تفصيلي
-        self.payment_table = QTableWidget()
-        self.payment_table.setColumnCount(3)
-        self.payment_table.setHorizontalHeaderLabels(["طريقة الدفع", "عدد العمليات", "القيمة الإجمالية"])
-        layout.addWidget(self.payment_table)
-        
-        # تحديث البيانات
-        self.refresh_payment_methods()
-        
-        return tab
-    
-    def refresh_payment_methods(self):
-        """تحديث بيانات طرق الدفع"""
-        sales = self.db.get_sales()
-        
-        # تجميع البيانات حسب طريقة الدفع
-        payment_stats = {}
-        for sale in sales:
-            method = sale['payment_method']
-            if method not in payment_stats:
-                payment_stats[method] = {
-                    'count': 0,
-                    'total': 0
-                }
-            payment_stats[method]['count'] += 1
-            payment_stats[method]['total'] += sale['total_amount']
-        
-        # تحديث الجدول
-        self.payment_table.setRowCount(len(payment_stats))
-        
-        row = 0
-        for method, stats in payment_stats.items():
-            method_name = {
-                'Cash': 'نقداً',
-                'Card': 'بطاقة',
-                'Debt': 'آجل'
-            }.get(method, method)
-            
-            self.payment_table.setItem(row, 0, QTableWidgetItem(method_name))
-            self.payment_table.setItem(row, 1, QTableWidgetItem(str(stats['count'])))
-            self.payment_table.setItem(row, 2, QTableWidgetItem(f"{stats['total']:.2f}"))
-            row += 1
-    
-    def export_report(self):
-        """تصدير التقرير الحالي"""
-        current_tab = self.tabs.currentIndex()
-        
-        if current_tab == 0:
-            self.export_daily_sales()
-        elif current_tab == 1:
-            self.export_top_products()
-        elif current_tab == 2:
-            self.export_payment_methods()
-    
-    def export_daily_sales(self):
-        """تصدير تقرير المبيعات اليومية"""
-        # تنفيذ التصدير إلى Excel
-        pass
-
-    def export_top_products(self):
-        pass
-
-    def export_payment_methods(self):
-        pass
-    
-    def print_report(self):
-        """طباعة التقرير"""
-        # تنفيذ الطباعة
-        pass
-
-    def on_tab_changed(self, index):
-        if index == 0: # Daily Sales tab
-            self.refresh_daily_sales()
-        elif index == 1: # Top Products tab
-            self.refresh_top_products()
-        elif index == 2: # Payment Methods tab
-            self.refresh_payment_methods()
+        self.top_table.setRowCount(0)
+        for p in sorted_stats[:20]:
+            row = self.top_table.rowCount()
+            self.top_table.insertRow(row)
+            self.top_table.setItem(row, 0, QTableWidgetItem(p['name']))
+            self.top_table.setItem(row, 1, QTableWidgetItem(str(p['qty'])))
+            self.top_table.setItem(row, 2, QTableWidgetItem(f"{p['rev']:.2f}"))
+            perc = (p['rev'] / total_rev * 100) if total_rev > 0 else 0
+            self.top_table.setItem(row, 3, QTableWidgetItem(f"{perc:.1f}%"))

@@ -1,39 +1,53 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame
 from PySide6.QtCore import Qt
+from ui.base_page import BasePage
+from components.style_engine import Colors
 
-def create_reports_page(main_window):
-    page = QWidget()
-    layout = QVBoxLayout(page)
-    layout.setAlignment(Qt.AlignTop)
-    layout.setContentsMargins(20, 20, 20, 20)
-    main_window.reports_header = QLabel(main_window.lang.get_text("reports"))
-    main_window.reports_header.setObjectName("welcomeLabel")
-    layout.addWidget(main_window.reports_header)
-    
-    # Invoicing
-    invoice_group = QFrame()
-    invoice_group.setObjectName("statsCard")
-    invoice_layout = QVBoxLayout(invoice_group)
-    main_window.invoice_header = QLabel("Generate Invoice")
-    main_window.invoice_header.setStyleSheet("font-size: 16px; font-weight: bold; color: #58a6ff;")
-    main_window.generate_invoice_btn = QPushButton("Generate PDF for Last Sale")
-    main_window.generate_invoice_btn.setObjectName("posButton")
-    main_window.generate_invoice_btn.clicked.connect(main_window.generate_last_invoice_pdf)
-    invoice_layout.addWidget(main_window.invoice_header)
-    invoice_layout.addWidget(main_window.generate_invoice_btn)
-    layout.addWidget(invoice_group)
+class ReportsPage(BasePage):
+    def __init__(self, main_window):
+        title = main_window.lang.get_text("reports")
+        subtitle = "تقارير المبيعات، الفواتير، والتحليلات المتقدمة"
+        super().__init__(main_window, title, subtitle)
+        self.setup_ui()
 
-    # Advanced Reports
-    adv_reports_group = QFrame()
-    adv_reports_group.setObjectName("statsCard")
-    adv_reports_layout = QVBoxLayout(adv_reports_group)
-    adv_reports_header = QLabel("Advanced Analytics")
-    adv_reports_header.setStyleSheet("font-size: 16px; font-weight: bold; color: #58a6ff;")
-    adv_reports_btn = QPushButton("Show Advanced Reports")
-    adv_reports_btn.setObjectName("inventoryButton")
-    adv_reports_btn.clicked.connect(main_window.show_advanced_reports)
-    adv_reports_layout.addWidget(adv_reports_header)
-    adv_reports_layout.addWidget(adv_reports_btn)
-    layout.addWidget(adv_reports_group)
+    def setup_ui(self):
+        # Invoicing Group
+        invoice_group = QFrame()
+        invoice_group.setObjectName("statsCard")
+        invoice_layout = QVBoxLayout(invoice_group)
+        invoice_layout.setContentsMargins(20, 20, 20, 20)
+        
+        invoice_header = QLabel("إدارة الفواتير")
+        invoice_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT};")
+        
+        self.gen_invoice_btn = QPushButton("إصدار فاتورة لآخر عملية بيع (PDF)")
+        self.gen_invoice_btn.setObjectName("posButton")
+        self.gen_invoice_btn.setFixedHeight(45)
+        self.gen_invoice_btn.clicked.connect(self.main_window.generate_last_invoice_pdf)
+        
+        invoice_layout.addWidget(invoice_header)
+        invoice_layout.addWidget(self.gen_invoice_btn)
+        self.add_widget(invoice_group)
+        
+        # Advanced Reports Group
+        adv_reports_group = QFrame()
+        adv_reports_group.setObjectName("statsCard")
+        adv_reports_layout = QVBoxLayout(adv_reports_group)
+        adv_reports_layout.setContentsMargins(20, 20, 20, 20)
+        
+        adv_header = QLabel("التحليلات المتقدمة")
+        adv_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT};")
+        
+        self.show_adv_btn = QPushButton("عرض التقارير والرسوم البيانية المحسنة")
+        self.show_adv_btn.setObjectName("inventoryButton")
+        self.show_adv_btn.setFixedHeight(45)
+        self.show_adv_btn.clicked.connect(self.main_window.show_advanced_reports)
+        
+        adv_reports_layout.addWidget(adv_header)
+        adv_reports_layout.addWidget(self.show_adv_btn)
+        self.add_widget(adv_reports_group)
+        
+        self.layout.addStretch()
 
-    return page
+    def refresh(self):
+        pass

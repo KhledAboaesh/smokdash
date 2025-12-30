@@ -1,110 +1,68 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QTableWidget, QHeaderView, QPushButton
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QScrollArea
 from PySide6.QtCore import Qt
-import qtawesome as qta
+from ui.base_page import BasePage
+from components.stats_card import StatsCard
+from components.style_engine import Colors
 
-def create_dashboard_page(main_window):
-    print("Executing create_dashboard_page from ui/dashboard_page.py")
-    page = QWidget()
-    layout = QVBoxLayout(page)
-    layout.setContentsMargins(30, 30, 30, 30)
-    
-    shop_name = main_window.settings.get('shop_name', 'سموك داش')
-    header = QLabel(f"{main_window.lang.get_text('welcome')}، {main_window.user_data['full_name']}")
-    header.setObjectName("welcomeLabel")
-    layout.addWidget(header)
-    
-    sub = QLabel(main_window.lang.get_text("dashboard_sub") if main_window.lang.get_text("dashboard_sub") != "{dashboard_sub}" else "متابعة أداء المحل اليوم")
-    sub.setStyleSheet("color: #8b949e; font-size: 16px; margin-bottom: 25px;")
-    layout.addWidget(sub)
-    
-    stats_layout = QHBoxLayout()
-    stats_layout.setSpacing(25)
-    currency = main_window.settings.get('currency', 'LYD')
-    main_window.card_sales = create_stats_card(main_window.lang.get_text("sales_amount"), f"0.00 {currency}", "fa5s.money-bill-wave")
-    main_window.card_count = create_stats_card(main_window.lang.get_text("transaction_count"), "0", "fa5s.receipt")
-    main_window.card_stock = create_stats_card(main_window.lang.get_text("stock_count"), "0", "fa5s.box-open")
-    
-    stats_layout.addWidget(main_window.card_sales)
-    stats_layout.addWidget(main_window.card_count)
-    stats_layout.addWidget(main_window.card_stock)
-    layout.addLayout(stats_layout)
-    
-    layout.addSpacing(40)
-    recent_label = QLabel("آخر العمليات")
-    recent_label.setStyleSheet("font-size: 18px; font-weight: bold; color: #fff;")
-    layout.addWidget(recent_label)
-    
-    main_window.recent_table = QTableWidget(0, 3)
-    main_window.recent_table.setHorizontalHeaderLabels(["الوقت", "المبلغ", "طريقة الدفع"])
-    main_window.recent_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-    main_window.recent_table.setFixedHeight(250)
-    layout.addWidget(main_window.recent_table)
-    
-    # Analytics Section
-    layout.addSpacing(30)
-    analytics_row = QHBoxLayout()
-    
-    # Weekly Sales Chart (Simple Bar Representation)
-    main_window.chart_frame = QFrame()
-    main_window.chart_frame.setObjectName("statsCard")
-    chart_layout = QVBoxLayout(main_window.chart_frame)
-    chart_title = QLabel("تحليل المبيعات الأسبوعي")
-    chart_title.setStyleSheet("font-weight: bold; font-size: 16px; color: #58a6ff;")
-    chart_layout.addWidget(chart_title)
-    
-    main_window.bars_container = QHBoxLayout()
-    main_window.bars_container.setSpacing(15)
-    main_window.bars_container.setAlignment(Qt.AlignBottom)
-    main_window.bars_container.setContentsMargins(10, 20, 10, 10)
-    chart_layout.addLayout(main_window.bars_container)
-    
-    # Stock Alerts
-    main_window.alerts_frame = QFrame()
-    main_window.alerts_frame.setObjectName("statsCard")
-    main_window.alerts_frame.setFixedWidth(300)
-    alerts_layout = QVBoxLayout(main_window.alerts_frame)
-    alerts_title = QLabel("تنبيهات المخزون")
-    alerts_title.setStyleSheet("font-weight: bold; font-size: 16px; color: #ff5252;")
-    alerts_layout.addWidget(alerts_title)
-    
-    main_window.alerts_list = QVBoxLayout()
-    alerts_layout.addLayout(main_window.alerts_list)
-    alerts_layout.addStretch()
-    
-    analytics_row.addWidget(main_window.chart_frame, 2)
-    analytics_row.addWidget(main_window.alerts_frame, 1)
-    layout.addLayout(analytics_row)
+class DashboardPage(BasePage):
+    def __init__(self, main_window):
+        # Localize title/subtitle
+        title = main_window.lang.get_text("dashboard")
+        subtitle = "نظرة عامة على أداء المنظومة اليوم"
+        super().__init__(main_window, title, subtitle)
+        
+        self.setup_ui()
+        
+    def setup_ui(self):
+        # Stats Row
+        stats_layout = QHBoxLayout()
+        stats_layout.setSpacing(20)
+        
+        currency = self.main_window.settings.get('currency', 'LYD')
+        
+        self.card_sales = StatsCard("مبيعات اليوم", f"0.00 {currency}", "fa5s.chart-line", Colors.SUCCESS)
+        self.card_transactions = StatsCard("عدد العمليات", "0", "fa5s.receipt", Colors.ACCENT)
+        self.card_stock = StatsCard("إجمالي المخزون", "0", "fa5s.boxes", Colors.DANGER)
+        
+        stats_layout.addWidget(self.card_sales)
+        stats_layout.addWidget(self.card_transactions)
+        stats_layout.addWidget(self.card_stock)
+        
+        self.add_layout(stats_layout)
+        
+        # Bottom Content (Charts & Recent Sales - Placeholder for now)
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setSpacing(20)
+        
+        # Recent Sales Placeholder
+        recent_frame = QFrame()
+        recent_frame.setObjectName("statsCard")
+        recent_layout = QVBoxLayout(recent_frame)
+        recent_layout.addWidget(QLabel("آخر العمليات"))
+        recent_layout.addStretch()
+        
+        # Inventory Alerts Placeholder
+        alerts_frame = QFrame()
+        alerts_frame.setObjectName("statsCard")
+        alerts_layout = QVBoxLayout(alerts_frame)
+        alerts_layout.addWidget(QLabel("تنبيهات النواقص"))
+        alerts_layout.addStretch()
+        
+        bottom_layout.addWidget(recent_frame, 2)
+        bottom_layout.addWidget(alerts_frame, 1)
+        
+        self.add_layout(bottom_layout)
+        self.layout.addStretch()
 
-    layout.addSpacing(30)
-    main_window.shift_group = QFrame()
-    main_window.shift_group.setObjectName("statsCard")
-    shift_layout = QHBoxLayout(main_window.shift_group)
-    main_window.shift_status_label = QLabel("حالة الوردية: مغلقة")
-    main_window.shift_status_label.setStyleSheet("font-weight: bold; font-size: 16px;")
-    main_window.shift_btn = QPushButton("فتح وردية جديدة")
-    main_window.shift_btn.setObjectName("posButton")
-    main_window.shift_btn.setFixedWidth(200)
-    main_window.shift_btn.clicked.connect(main_window.toggle_shift)
-    
-    shift_layout.addWidget(main_window.shift_status_label)
-    shift_layout.addStretch()
-    shift_layout.addWidget(main_window.shift_btn)
-    layout.addWidget(main_window.shift_group)
-    
-    layout.addStretch()
-    return page
-
-def create_stats_card(title, value, icon):
-    card = QFrame()
-    card.setObjectName("statsCard")
-    card_layout = QVBoxLayout(card)
-    icon_label = QLabel()
-    icon_label.setPixmap(qta.icon(icon, color="#58a6ff").pixmap(40, 40))
-    title_label = QLabel(title)
-    title_label.setStyleSheet("color: #888888; font-size: 15px; font-weight: bold;")
-    value_label = QLabel(value)
-    value_label.setObjectName("totalLabel")
-    card_layout.addWidget(icon_label)
-    card_layout.addWidget(title_label)
-    card_layout.addWidget(value_label)
-    return card
+    def refresh(self):
+        # Logic to update values from DB
+        sales = self.main_window.db.get_todays_sales()
+        total_sales = sum(s['total_amount'] for s in sales)
+        count = len(sales)
+        products = self.main_window.db.get_products()
+        total_stock = sum(p['stock'] for p in products)
+        
+        currency = self.main_window.settings.get('currency', 'LYD')
+        self.card_sales.update_value(f"{total_sales:.2f} {currency}")
+        self.card_transactions.update_value(str(count))
+        self.card_stock.update_value(str(total_stock))

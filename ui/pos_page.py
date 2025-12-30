@@ -1,82 +1,88 @@
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, 
-                             QTableWidget, QFrame, QLabel, QPushButton, QHeaderView, QMessageBox, QInputDialog)
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QTableWidget, QTableWidgetItem, QHeaderView, QPushButton
+from PySide6.QtCore import Qt, QSize
+import qtawesome as qta
+from ui.base_page import BasePage
+from components.style_engine import Colors, StyleEngine
 
-def create_pos_page(main_window):
-    page = QWidget()
-    layout = QHBoxLayout(page)
-    layout.setContentsMargins(20, 20, 20, 20)
-    layout.setSpacing(20)
-    
-    cart_panel = QFrame()
-    cart_panel.setFixedWidth(420)
-    cart_panel.setObjectName("sidebar") # Reuse sidebar glass style
-    cart_layout = QVBoxLayout(cart_panel)
-    cart_layout.setContentsMargins(20, 20, 20, 20)
-    
-    cart_label = QLabel("سلة المشتريات")
-    cart_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #00bcd4;")
-    cart_layout.addWidget(cart_label)
-    
-    main_window.cart_table = QTableWidget(0, 3)
-    main_window.cart_table.setHorizontalHeaderLabels(["الصنف", "الكمية", "الإجمالي"])
-    main_window.cart_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-    cart_layout.addWidget(main_window.cart_table)
-    
-    total_frame = QFrame()
-    total_frame.setObjectName("totalFrame")
-    total_layout = QVBoxLayout(total_frame)
-    currency = main_window.settings.get('currency', 'LYD')
-    main_window.pos_total_label = QLabel(f"الإجمالي: 0.00 {currency}")
-    main_window.pos_total_label.setObjectName("posTotalLabel")
-    main_window.pos_total_label.setAlignment(Qt.AlignCenter)
-    total_layout.addWidget(main_window.pos_total_label)
-    cart_layout.addWidget(total_frame)
-    
-    pay_layout = QHBoxLayout()
-    
-    main_window.pay_cash_btn = QPushButton("كاش (نقد)")
-    main_window.pay_cash_btn.setObjectName("posButton")
-    main_window.pay_cash_btn.setFixedHeight(60)
-    main_window.pay_cash_btn.clicked.connect(lambda: main_window.process_sale("Cash"))
-    
-    main_window.pay_card_btn = QPushButton("بطاقة مصرفية")
-    main_window.pay_card_btn.setObjectName("inventoryButton") # Use secondary color
-    main_window.pay_card_btn.setFixedHeight(60)
-    main_window.pay_card_btn.clicked.connect(lambda: main_window.process_sale("Card"))
+class POSPage(BasePage):
+    def __init__(self, main_window):
+        title = main_window.lang.get_text("pos")
+        subtitle = "نظام البيع السريع وإدارة الفواتير"
+        super().__init__(main_window, title, subtitle)
+        self.setup_ui()
 
-    main_window.pay_debt_btn = QPushButton("آجل (دين)")
-    main_window.pay_debt_btn.setStyleSheet("background-color: #ff5252; color: white; border: none; font-weight: bold; border-radius: 12px;")
-    main_window.pay_debt_btn.setFixedHeight(60)
-    main_window.pay_debt_btn.clicked.connect(lambda: main_window.process_sale("Debt"))
-    
-    pay_layout.addWidget(main_window.pay_cash_btn)
-    pay_layout.addWidget(main_window.pay_card_btn)
-    pay_layout.addWidget(main_window.pay_debt_btn)
-    cart_layout.addLayout(pay_layout)
-    
-    clear_btn = QPushButton("تفريغ السلة")
-    clear_btn.setFixedHeight(40)
-    clear_btn.clicked.connect(main_window.clear_cart)
-    cart_layout.addWidget(clear_btn)
-    
-    layout.addWidget(cart_panel)
-    
-    products_panel = QFrame()
-    products_layout = QVBoxLayout(products_panel)
-    main_window.pos_search = QLineEdit()
-    main_window.pos_search.setPlaceholderText("🔍  ابحث عن صنف أو امسح الباركود...")
-    main_window.pos_search.setFixedHeight(55)
-    main_window.pos_search.textChanged.connect(main_window.search_pos_products)
-    products_layout.addWidget(main_window.pos_search)
-    
-    main_window.pos_products_table = QTableWidget(0, 3)
-    main_window.pos_products_table.setHorizontalHeaderLabels(["الاسم", "السعر", "المتوفر"])
-    main_window.pos_products_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-    main_window.pos_products_table.setEditTriggers(QTableWidget.NoEditTriggers)
-    main_window.pos_products_table.itemDoubleClicked.connect(main_window.add_to_cart)
-    products_layout.addWidget(main_window.pos_products_table)
-    
-    layout.addWidget(products_panel)
-    main_window.cart_items = []
-    return page
+    def setup_ui(self):
+        main_h_layout = QHBoxLayout()
+        main_h_layout.setSpacing(20)
+        
+        # --- LEFT: Product Selection ---
+        left_panel = QFrame()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Search Bar
+        search_box = QHBoxLayout()
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("بحث عن صنف (اسم أو كود)...")
+        self.search_input.textChanged.connect(self.main_window.search_pos_products)
+        
+        icon_label = QLabel()
+        icon_label.setPixmap(qta.icon("fa5s.search", color=Colors.TEXT_SECONDARY).pixmap(16, 16))
+        search_box.addWidget(icon_label)
+        search_box.addWidget(self.search_input)
+        left_layout.addLayout(search_box)
+        
+        # Product Table
+        self.products_table = QTableWidget(0, 3)
+        self.products_table.setHorizontalHeaderLabels(["الصنف", "السعر", "المخزون"])
+        self.products_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.products_table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.products_table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.products_table.itemDoubleClicked.connect(self.main_window.add_to_cart)
+        left_layout.addWidget(self.products_table)
+        
+        main_h_layout.addWidget(left_panel, 2)
+        
+        # --- RIGHT: Cart & Checkout ---
+        right_panel = QFrame()
+        right_panel.setObjectName("statsCard") # Reusing card style for cart container
+        right_layout = QVBoxLayout(right_panel)
+        
+        right_layout.addWidget(QLabel("سلة المشتريات"))
+        
+        self.cart_table = QTableWidget(0, 3)
+        self.cart_table.setHorizontalHeaderLabels(["الصنف", "الكمية", "الإجمالي"])
+        self.cart_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        right_layout.addWidget(self.cart_table)
+        
+        # Totals Area
+        self.total_label = QLabel("الإجمالي: 0.00 LYD")
+        self.total_label.setStyleSheet(f"font-size: 24px; font-weight: 800; color: {Colors.ACCENT}; margin-top: 10px;")
+        right_layout.addWidget(self.total_label)
+        
+        # Actions
+        btn_box = QHBoxLayout()
+        self.pay_btn = QPushButton("دفع نقداً")
+        self.pay_btn.setObjectName("posButton")
+        self.pay_btn.clicked.connect(lambda: self.main_window.process_sale("Cash"))
+        
+        self.debt_btn = QPushButton("دين")
+        self.debt_btn.setObjectName("inventoryButton")
+        self.debt_btn.clicked.connect(lambda: self.main_window.process_sale("Debt"))
+        
+        self.clear_btn = QPushButton("إفراغ")
+        self.clear_btn.setStyleSheet(f"color: {Colors.DANGER}; border: 1px solid {Colors.DANGER}; padding: 8px;")
+        self.clear_btn.clicked.connect(self.main_window.clear_cart)
+        
+        btn_box.addWidget(self.pay_btn)
+        btn_box.addWidget(self.debt_btn)
+        btn_box.addWidget(self.clear_btn)
+        right_layout.addLayout(btn_box)
+        
+        main_h_layout.addWidget(right_panel, 1)
+        
+        self.add_layout(main_h_layout)
+
+    def refresh(self):
+        # We'll call the search method which populates the table
+        pass

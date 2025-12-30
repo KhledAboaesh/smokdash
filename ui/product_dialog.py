@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QLineEdit, QDoubleSpinBox, QSpinBox, QHBoxLayout, QPushButton, QMessageBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QLineEdit, QDoubleSpinBox, QSpinBox, QHBoxLayout, QPushButton, QMessageBox, QLabel, QFrame
 from PySide6.QtCore import Qt
+from components.style_engine import Colors, StyleEngine
 
 class ProductDialog(QDialog):
     def __init__(self, parent=None, product_data=None):
@@ -7,68 +8,107 @@ class ProductDialog(QDialog):
         self.product_data = product_data
         self.is_edit_mode = product_data is not None
         
-        if self.is_edit_mode:
-            self.setWindowTitle("تعديل الصنف")
-        else:
-            self.setWindowTitle("إضافة صنف جديد")
-            
-        self.setFixedWidth(400)
+        # Window attributes
+        self.setWindowTitle("تعديل الصنف" if self.is_edit_mode else "إضافة صنف جديد")
+        self.setFixedWidth(450)
         self.setLayoutDirection(Qt.RightToLeft)
+        self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        
         self.setup_ui()
         
         if self.is_edit_mode:
             self.load_product_data()
 
     def setup_ui(self):
-        layout = QVBoxLayout(self)
+        # Container with custom border and shadow
+        self.container = QFrame(self)
+        self.container.setObjectName("statsCard")
+        self.container.setStyleSheet(f"""
+            QFrame#statsCard {{
+                background-color: #161b22;
+                border: 1px solid {Colors.ACCENT};
+                border-radius: 12px;
+            }}
+            QLabel {{ color: {Colors.TEXT_SECONDARY}; font-weight: 600; }}
+            QLineEdit, QDoubleSpinBox, QSpinBox {{
+                background-color: #0d1117;
+                border: 1px solid #30363d;
+                border-radius: 6px;
+                padding: 8px;
+                color: {Colors.TEXT_PRIMARY};
+            }}
+            QLineEdit:focus, QDoubleSpinBox:focus, QSpinBox:focus {{
+                border: 1px solid {Colors.ACCENT};
+            }}
+        """)
+        
+        main_layout = QVBoxLayout(self)
+        main_layout.addWidget(self.container)
+        
+        content_layout = QVBoxLayout(self.container)
+        content_layout.setContentsMargins(30, 30, 30, 30)
+        content_layout.setSpacing(20)
+        
+        # Header
+        header_lbl = QLabel(self.windowTitle())
+        header_lbl.setStyleSheet(f"font-size: 20px; font-weight: 800; color: {Colors.ACCENT}; margin-bottom: 10px;")
+        content_layout.addWidget(header_lbl)
+        
+        # Form
         form = QFormLayout()
+        form.setSpacing(15)
         
         self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("أدخل اسم الصنف (مثل: مالبورو أحمر)...")
+        self.name_input.setPlaceholderText("اسم المنتج...")
         
         self.brand_input = QLineEdit()
-        self.brand_input.setPlaceholderText("أدخل اسم الماركة (مثل: Philip Morris)...")
+        self.brand_input.setPlaceholderText("الماركة/الشركة المصنعة...")
         
         self.price_input = QDoubleSpinBox()
-        self.price_input.setMaximum(9999.99)
-        self.price_input.setMinimum(0.01)
-        # Assuming parent has a settings attribute with currency
-        currency = self.parent().settings.get('currency', 'LYD') if (self.parent() and hasattr(self.parent(), 'settings')) else 'LYD'
-        self.price_input.setSuffix(f" {currency}")
+        self.price_input.setMaximum(99999.99)
+        self.price_input.setSuffix(" LYD")
         
         self.stock_input = QSpinBox()
         self.stock_input.setMaximum(100000)
-        self.stock_input.setValue(10)
         
         self.barcode_input = QLineEdit()
-        self.barcode_input.setPlaceholderText("الباركود...")
+        self.barcode_input.setPlaceholderText("الباركود العالمي...")
         
         form.addRow("اسم الصنف:", self.name_input)
         form.addRow("الماركة:", self.brand_input)
         form.addRow("سعر البيع:", self.price_input)
-        form.addRow("الكمية:", self.stock_input)
-        form.addRow("الباركود:", self.barcode_input)
+        form.addRow("الكمية بالمخزن:", self.stock_input)
+        form.addRow("كود الباركود:", self.barcode_input)
         
-        layout.addLayout(form)
+        content_layout.addLayout(form)
         
-        btns = QHBoxLayout()
-        save_text = "حفظ التعديلات" if self.is_edit_mode else "حفظ"
-        save_btn = QPushButton(save_text)
-        save_btn.clicked.connect(self.accept)
+        # Actions
+        btns_layout = QHBoxLayout()
+        btns_layout.setSpacing(10)
+        
+        save_btn = QPushButton("حفظ التغييرات" if self.is_edit_mode else "إضافة")
         save_btn.setObjectName("posButton")
+        save_btn.setFixedHeight(40)
+        save_btn.clicked.connect(self.accept)
         
         cancel_btn = QPushButton("إلغاء")
+        cancel_btn.setStyleSheet(f"background: transparent; color: {Colors.TEXT_SECONDARY}; padding: 8px;")
         cancel_btn.clicked.connect(self.reject)
         
         if self.is_edit_mode:
-            delete_btn = QPushButton("حذف")
-            delete_btn.setStyleSheet("background-color: #da3633; color: white; border-radius: 6px; padding: 8px;")
-            delete_btn.clicked.connect(self.delete_product)
-            btns.addWidget(delete_btn)
+            self.delete_btn = QPushButton("حذف")
+            self.delete_btn.setStyleSheet(f"background-color: {Colors.DANGER}; color: white; border-radius: 6px; padding: 8px;")
+            self.delete_btn.clicked.connect(self.delete_product)
+            btns_layout.addWidget(self.delete_btn)
+            
+        btns_layout.addStretch()
+        btns_layout.addWidget(cancel_btn)
+        btns_layout.addWidget(save_btn)
         
-        btns.addWidget(save_btn)
-        btns.addWidget(cancel_btn)
-        layout.addLayout(btns)
+        content_layout.addLayout(btns_layout)
+        
+        StyleEngine.apply_shadow(self.container)
 
     def load_product_data(self):
         if self.product_data:
@@ -79,7 +119,7 @@ class ProductDialog(QDialog):
             self.barcode_input.setText(self.product_data.get('barcode', ''))
 
     def delete_product(self):
-        reply = QMessageBox.question(self, "تأكيد الحذف", "هل أنت متأكد من حذف هذا المنتج؟", QMessageBox.Yes | QMessageBox.No)
+        reply = QMessageBox.question(self, "تأكيد الحذف", "هل أنت متأكد من حذف هذا المنتج نهائياً؟", QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
             self.done(2)
 

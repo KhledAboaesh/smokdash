@@ -10,5 +10,12 @@
         "password": "123",
         "role": "cashier",
         "full_name": "موظف مبيعات"
+    },
+    {
+        "username": "lkj",
+        "password": "123",
+        "full_name": "okjoj ojojo",
+        "phone": "091",
+        "role": "cashier"
     }
 ]
