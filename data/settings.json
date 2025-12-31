@@ -1,9 +1,3 @@
 {
-    "theme": "dark",
-    "currency": "LYD",
-    "shop_name": "SmokeDash",
-    "language": "ar",
-    "auto_print": true,
-    "logo_path": "C:/Users/KhledFaraj/Downloads/Gemini_Generated_Image_byfl80byfl80byfl.png",
-    "show_logo": false
+    "language": "ar"
 }

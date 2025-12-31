@@ -75,7 +75,7 @@ class POSPage(BasePage):
         self.debt_btn.clicked.connect(lambda: self.main_window.process_sale("دين"))
         
         self.clear_btn = QPushButton("إفراغ")
-        self.clear_btn.setStyleSheet(f"color: {Colors.DANGER}; border: 1px solid {Colors.DANGER}; padding: 8px;")
+        self.clear_btn.setStyleSheet(f"background-color: transparent; color: {Colors.DANGER}; border: 1px solid {Colors.DANGER}; padding: 8px;")
         self.clear_btn.clicked.connect(self.main_window.clear_cart)
         
         btn_box.addWidget(self.pay_btn)

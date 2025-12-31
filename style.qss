@@ -82,7 +82,7 @@ QLineEdit {
     border-radius: 0px;
 }
 
-QPushButton {
+QPushButton, #posButton, #inventoryButton, #loginBtn {
     background-color: #D4AF37;
     color: #062C21;
     border: none;
@@ -91,7 +91,35 @@ QPushButton {
     border-radius: 0px;
 }
 
-QPushButton:hover {
+QPushButton:hover, #posButton:hover, #inventoryButton:hover, #loginBtn:hover {
     background-color: #FDFCF0;
     color: #062C21;
+}
+
+QComboBox {
+    background-color: #062C21;
+    border: 1px solid #D4AF37;
+    color: #FDFCF0;
+    padding: 5px;
+    border-radius: 0px;
+}
+
+QComboBox::drop-down {
+    border-left: 1px solid #D4AF37;
+}
+
+QCheckBox {
+    color: #FDFCF0;
+    font-weight: 600;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    background-color: #062C21;
+    border: 1px solid #D4AF37;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #D4AF37;
 }

@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QScrollArea
 from PySide6.QtCore import Qt
 from components.style_engine import Colors, StyleEngine
 
@@ -19,11 +19,32 @@ class BasePage(QWidget):
         self.main_frame_layout = QVBoxLayout(self.main_frame)
         self.main_frame_layout.setContentsMargins(20, 20, 20, 20)
         
-        # Content Section
+        # Content Section with Scroll Area
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setStyleSheet(f"""
+            QScrollArea {{ border: none; background: transparent; }}
+            QScrollBar:vertical {{
+                background-color: {Colors.BACKGROUND};
+                width: 10px;
+                border: none;
+            }}
+            QScrollBar::handle:vertical {{
+                background-color: {Colors.ACCENT};
+                border-radius: 5px;
+                min-height: 20px;
+            }}
+        """)
+        
         self.content_area = QWidget()
+        self.content_area.setObjectName("contentContainer")
+        self.content_area.setStyleSheet("background: transparent;")
         self.content_layout = QVBoxLayout(self.content_area)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.main_frame_layout.addWidget(self.content_area)
+        self.content_layout.setSpacing(15)
+        
+        self.scroll.setWidget(self.content_area)
+        self.main_frame_layout.addWidget(self.scroll)
         
         self.layout.addWidget(self.main_frame)
         

@@ -39,7 +39,7 @@ class LoginDialog(QDialog):
                 background-color: {Colors.BACKGROUND};
                 border: 1px solid {Colors.ACCENT};
                 border-radius: 0px;
-                padding: 5px;
+                padding: 12px 15px;
                 color: {Colors.TEXT_PRIMARY};
                 font-size: 16px;
             }}
@@ -50,11 +50,13 @@ class LoginDialog(QDialog):
                 background-color: {Colors.ACCENT};
                 color: {Colors.BACKGROUND};
                 border-radius: 0px;
-                font-size: 18px;
-                font-weight: bold;
+                font-size: 20px;
+                font-weight: 800;
+                letter-spacing: 1px;
             }}
             QPushButton#loginBtn:hover {{
                 background-color: {Colors.TEXT_PRIMARY};
+                color: {Colors.BACKGROUND};
             }}
         """)
         
@@ -68,22 +70,15 @@ class LoginDialog(QDialog):
         
         from components.utils import resource_path
         self.logo_pix = QLabel()
+        self.logo_pix.setFixedSize(150, 150)
         logo_pix = QPixmap(resource_path("logo.png"))
-        self.logo_pix.setPixmap(logo_pix.scaled(130, 130, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.logo_pix.setPixmap(logo_pix.scaled(140, 140, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.logo_pix.setAlignment(Qt.AlignCenter)
         
-        self.logo_lbl = QLabel("SMOKEDASH V3.00")
-        self.logo_lbl.setObjectName("titleLabel")
-        self.logo_lbl.setAlignment(Qt.AlignCenter)
-        
-        self.sub_lbl = QLabel("نظام الإدارة المتميز - الإصدار الثالث")
-        self.sub_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY}; font-size: 16px; margin-bottom: 0px;")
-        self.sub_lbl.setAlignment(Qt.AlignCenter)
-        
         header_layout.addWidget(self.logo_pix)
-        header_layout.addWidget(self.logo_lbl)
-        header_layout.addWidget(self.sub_lbl)
+        header_layout.addSpacing(20)
         card_layout.addLayout(header_layout)
+        card_layout.addSpacing(10)
         
         # Form
         self.username_input = QLineEdit()
@@ -100,10 +95,13 @@ class LoginDialog(QDialog):
         self.login_btn.setFixedHeight(60)
         self.login_btn.clicked.connect(self.check_login)
         
-        card_layout.addWidget(QLabel("بيانات الدخول:"))
+        form_lbl = QLabel("بيانات الدخول الأمنة")
+        form_lbl.setStyleSheet(f"color: {Colors.ACCENT}; font-size: 13px; font-weight: bold; margin-bottom: 0px; letter-spacing: 1px;")
+        card_layout.addWidget(form_lbl)
         card_layout.addWidget(self.username_input)
+        card_layout.addSpacing(5)
         card_layout.addWidget(self.password_input)
-        card_layout.addSpacing(10)
+        card_layout.addSpacing(25)
         card_layout.addWidget(self.login_btn)
         
         # Footer

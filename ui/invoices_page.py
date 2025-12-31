@@ -87,10 +87,11 @@ class InvoicesPage(BasePage):
         self.table.verticalHeader().setVisible(False)
         self.table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: transparent;
+                background-color: {Colors.SECONDARY_BG};
                 gridline-color: {Colors.ACCENT};
                 color: {Colors.TEXT_PRIMARY};
                 border: none;
+                alternate-background-color: #0D4F3D; /* Lighter Emerald for gradient feel */
             }}
             QHeaderView::section {{
                 background-color: {Colors.BACKGROUND};
