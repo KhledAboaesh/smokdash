@@ -25,17 +25,20 @@ class UserDialog(QDialog):
         self.container.setObjectName("statsCard")
         self.container.setStyleSheet(f"""
             QFrame#statsCard {{
-                background-color: #161b22;
-                border: 1px solid {Colors.ACCENT};
-                border-radius: 12px;
+                background-color: {Colors.SECONDARY_BG};
+                border: 2px solid {Colors.ACCENT};
+                border-radius: 0px;
             }}
-            QLabel {{ color: {Colors.TEXT_SECONDARY}; font-weight: 600; }}
+            QLabel {{ color: {Colors.TEXT_PRIMARY}; font-weight: 600; }}
             QLineEdit, QComboBox {{
-                background-color: #0d1117;
-                border: 1px solid #30363d;
-                border-radius: 6px;
+                background-color: {Colors.BACKGROUND};
+                border: 1px solid {Colors.ACCENT};
+                border-radius: 0px;
                 padding: 10px;
                 color: {Colors.TEXT_PRIMARY};
+            }}
+            QLineEdit:focus, QComboBox:focus {{
+                border: 2px solid {Colors.TEXT_PRIMARY};
             }}
         """)
         

@@ -13,11 +13,19 @@ class BasePage(QWidget):
         # Header Section
         self.setup_header(title, subtitle)
         
-        # Content Section (to be populated by subclasses)
+        # Main Box Frame (シガレットボックスのシミュレーション)
+        self.main_frame = QFrame()
+        self.main_frame.setObjectName("statsCard") # Uses the gold-bordered frame style
+        self.main_frame_layout = QVBoxLayout(self.main_frame)
+        self.main_frame_layout.setContentsMargins(20, 20, 20, 20)
+        
+        # Content Section
         self.content_area = QWidget()
         self.content_layout = QVBoxLayout(self.content_area)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.addWidget(self.content_area)
+        self.main_frame_layout.addWidget(self.content_area)
+        
+        self.layout.addWidget(self.main_frame)
         
     def setup_header(self, title, subtitle):
         header_widget = QWidget()

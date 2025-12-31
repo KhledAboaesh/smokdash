@@ -3,14 +3,14 @@ from PySide6.QtCore import QPropertyAnimation, QEasingCurve, QPoint, QSize, QPar
 from PySide6.QtGui import QColor
 
 class Colors:
-    BACKGROUND = "#0d1117"
-    SECONDARY_BG = "#161b22"
-    ACCENT = "#58a6ff"
-    SUCCESS = "#238636"
-    DANGER = "#ff6b6b"
-    TEXT_PRIMARY = "#f0f6fc"
-    TEXT_SECONDARY = "#8b949e"
-    BORDER = "#30363d"
+    BACKGROUND = "#062C21"    # Deep Emerald
+    SECONDARY_BG = "#0A3B2C"  # Lighter Emerald
+    ACCENT = "#D4AF37"        # Royal Gold
+    SUCCESS = "#3fb950"
+    DANGER = "#f85149"
+    TEXT_PRIMARY = "#FDFCF0"  # Pearl White
+    TEXT_SECONDARY = "#C8C4A0" # Dim Pearl
+    BORDER = "#D4AF37"        # Gold Border
 
 class StyleEngine:
     @staticmethod

@@ -59,6 +59,7 @@ class MainWindow(QMainWindow):
         
         # 2. Window Config
         self.setWindowTitle(self.lang.get_text("app_title"))
+        self.setWindowIcon(QPixmap(resource_path("logo.png")))
         self.resize(1200, 800)
         self.set_app_styling()
         
@@ -124,11 +125,19 @@ class MainWindow(QMainWindow):
         self.sidebar_layout.setContentsMargins(0, 0, 0, 0)
         self.sidebar_layout.setSpacing(0)
         
-        self.logo = QLabel("SMOKEDASH 2.0")
-        self.logo.setObjectName("logoLabel")
-        self.logo.setAlignment(Qt.AlignCenter)
-        self.sidebar_layout.addWidget(self.logo)
-        self.sidebar_layout.addSpacing(20)
+        # Brand Logo at Top
+        self.logo_img = QLabel()
+        logo_pix = QPixmap(resource_path("logo.png"))
+        self.logo_img.setPixmap(logo_pix.scaled(180, 180, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.logo_img.setAlignment(Qt.AlignCenter)
+        self.logo_img.setContentsMargins(0, 20, 0, 10)
+        self.sidebar_layout.addWidget(self.logo_img)
+        
+        self.logo_text = QLabel("SMOKEDASH V3.0")
+        self.logo_text.setObjectName("logoLabel")
+        self.logo_text.setAlignment(Qt.AlignCenter)
+        self.sidebar_layout.addWidget(self.logo_text)
+        self.sidebar_layout.addSpacing(10)
         
         self.main_layout.addWidget(self.sidebar)
         

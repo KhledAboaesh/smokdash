@@ -11,25 +11,14 @@ class SettingsPage(BasePage):
         self.setup_ui()
 
     def setup_ui(self):
-        # Language Section
-        lang_group = QFrame()
-        lang_group.setObjectName("statsCard")
-        lang_layout = QVBoxLayout(lang_group)
-        lang_layout.setContentsMargins(20, 20, 20, 20)
-        
-        lang_group = QFrame()
-        lang_group.setObjectName("statsCard")
-        lang_layout = QVBoxLayout(lang_group)
-        lang_layout.setContentsMargins(20, 20, 20, 20)
-        
-        # Branding Section
+        # 1. Branding Section (Shop Name & Logo)
         branding_group = QFrame()
         branding_group.setObjectName("statsCard")
         branding_layout = QVBoxLayout(branding_group)
-        branding_layout.setContentsMargins(20, 20, 20, 20)
+        branding_layout.setContentsMargins(25, 25, 25, 25)
         
         branding_header = QLabel("إعدادات الهوية (اسم المحل والشعار)")
-        branding_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT}; margin-bottom: 10px;")
+        branding_header.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {Colors.ACCENT}; margin-bottom: 10px;")
         
         # Shop Name
         self.shop_name_input = QLineEdit()
@@ -37,36 +26,46 @@ class SettingsPage(BasePage):
         self.shop_name_input.setText(self.main_window.settings.get('shop_name', 'SmokeDash'))
         self.shop_name_input.textChanged.connect(self.save_branding)
         
-        # Logo
+        # Logo Select
         logo_layout = QHBoxLayout()
         self.logo_path_lbl = QLabel(self.main_window.settings.get('logo_path', 'لا يوجد شعار محدد'))
-        self.logo_path_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY};")
+        self.logo_path_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY}; font-size: 12px;")
+        self.logo_path_lbl.setWordWrap(True)
         
         logo_btn = QPushButton("اختر الشعار")
-        logo_btn.setFixedSize(100, 30)
+        logo_btn.setFixedSize(120, 35)
         logo_btn.clicked.connect(self.select_logo)
         
         logo_layout.addWidget(logo_btn)
+        logo_layout.addWidget(self.logo_path_lbl)
         
-        self.show_logo_chk = QCheckBox("عرض الشعار في الفاتورة")
-        self.show_logo_chk.setStyleSheet(f"color: {Colors.TEXT_PRIMARY};")
+        self.show_logo_chk = QCheckBox("عرض الشعار في الفاتورة المطبوعة")
+        self.show_logo_chk.setStyleSheet(f"color: {Colors.TEXT_PRIMARY}; font-weight: bold;")
         self.show_logo_chk.setChecked(self.main_window.settings.get('show_logo', True))
         self.show_logo_chk.toggled.connect(self.save_branding)
         
         branding_layout.addWidget(branding_header)
         branding_layout.addWidget(QLabel("اسم المحل:"))
         branding_layout.addWidget(self.shop_name_input)
+        branding_layout.addSpacing(10)
         branding_layout.addLayout(logo_layout)
         branding_layout.addWidget(self.show_logo_chk)
         
         self.add_widget(branding_group)
+
+        # 2. Language & Internationalization
+        lang_group = QFrame()
+        lang_group.setObjectName("statsCard")
+        lang_layout = QVBoxLayout(lang_group)
+        lang_layout.setContentsMargins(25, 25, 25, 25)
         
         lang_header = QLabel(self.main_window.lang.get_text("language"))
-        lang_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT}; margin-bottom: 10px;")
+        lang_header.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {Colors.ACCENT}; margin-bottom: 10px;")
         
         self.lang_combo = QComboBox()
         self.lang_combo.addItem("العربية", "ar")
         self.lang_combo.addItem("English", "en")
+        self.lang_combo.setFixedHeight(40)
         
         current_lang = self.main_window.lang.current_language
         index = self.lang_combo.findData(current_lang)
@@ -78,19 +77,17 @@ class SettingsPage(BasePage):
         lang_layout.addWidget(self.lang_combo)
         self.add_widget(lang_group)
 
-        # Printing Configuration
+        # 3. Printing Configuration
         print_group = QFrame()
         print_group.setObjectName("statsCard")
         print_layout = QVBoxLayout(print_group)
-        print_layout.setContentsMargins(20, 20, 20, 20)
+        print_layout.setContentsMargins(25, 25, 25, 25)
         
-        print_header = QLabel("إعدادات الطباعة")
-        print_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT}; margin-bottom: 10px;")
+        print_header = QLabel("إعدادات الطابعة والتشغيل")
+        print_header.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {Colors.ACCENT}; margin-bottom: 10px;")
         
-        self.auto_print_chk = QCheckBox("تفعيل الطباعة التلقائية للفواتير")
-        self.auto_print_chk.setStyleSheet(f"color: {Colors.TEXT_PRIMARY}; font-size: 14px;")
-        
-        # Load setting
+        self.auto_print_chk = QCheckBox("تفعيل الطباعة التلقائية (مباشرة بعد عملية البيع)")
+        self.auto_print_chk.setStyleSheet(f"color: {Colors.TEXT_PRIMARY}; font-size: 14px; font-weight: bold;")
         self.auto_print_chk.setChecked(self.main_window.settings.get('auto_print', False))
         self.auto_print_chk.toggled.connect(self.update_auto_print_setting)
         
@@ -98,45 +95,41 @@ class SettingsPage(BasePage):
         print_layout.addWidget(self.auto_print_chk)
         self.add_widget(print_group)
         
-        # Backup & Update Section Row
-        backup_layout = QHBoxLayout()
-        backup_layout.setSpacing(20)
+        # 4. Backup & Maintenance
+        maint_layout = QHBoxLayout()
+        maint_layout.setSpacing(20)
         
-        # Backup Section
+        # Backup
         backup_group = QFrame()
         backup_group.setObjectName("statsCard")
         bl = QVBoxLayout(backup_group)
-        bl.setContentsMargins(20, 20, 20, 20)
+        bl.setContentsMargins(25, 25, 25, 25)
         
-        backup_header = QLabel("النسخ الاحتياطي")
-        backup_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT};")
-        self.backup_btn = QPushButton("إنشاء نسخة احتياطية يدوية")
+        bl.addWidget(QLabel("النسخ الاحتياطي", styleSheet=f"font-size: 18px; font-weight: bold; color: {Colors.ACCENT};"))
+        self.backup_btn = QPushButton("إنشاء نسخة احتياطية الآن")
         self.backup_btn.setObjectName("posButton")
-        self.backup_btn.setFixedHeight(40)
+        self.backup_btn.setFixedHeight(45)
         self.backup_btn.clicked.connect(self.main_window.create_manual_backup)
-        
-        bl.addWidget(backup_header)
         bl.addWidget(self.backup_btn)
         
-        # Update Section
+        # Update
         update_group = QFrame()
         update_group.setObjectName("statsCard")
         ul = QVBoxLayout(update_group)
-        ul.setContentsMargins(20, 20, 20, 20)
+        ul.setContentsMargins(25, 25, 25, 25)
         
-        update_header = QLabel("تحديثات النظام")
-        update_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT};")
-        self.update_btn = QPushButton("التحقق من وجود تحديثات")
+        ul.addWidget(QLabel("تحديثات النظام", styleSheet=f"font-size: 18px; font-weight: bold; color: {Colors.ACCENT};"))
+        self.update_btn = QPushButton("التحقق من الإصدار الجديد")
         self.update_btn.setObjectName("inventoryButton")
-        self.update_btn.setFixedHeight(40)
+        self.update_btn.setFixedHeight(45)
         self.update_btn.clicked.connect(self.main_window.check_for_updates_action)
-        
-        ul.addWidget(update_header)
         ul.addWidget(self.update_btn)
         
-        backup_layout.addWidget(backup_group)
-        backup_layout.addWidget(update_group)
-        self.add_layout(backup_layout)
+        maint_layout.addWidget(backup_group)
+        maint_layout.addWidget(update_group)
+        self.add_layout(maint_layout)
+        
+        self.layout.addStretch()
         
         self.layout.addStretch()
 

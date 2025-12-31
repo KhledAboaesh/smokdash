@@ -29,7 +29,7 @@ class LanguageManager:
     def create_arabic_language_file(self):
         """إنشاء ملف اللغة العربية"""
         arabic_translations = {
-            "app_title": "سموك داش - منظومة إدارة محل سجائر",
+            "app_title": "SmokeDash V3.00 - Premium ERP",
             "login": "تسجيل الدخول",
             "username": "اسم المستخدم",
             "password": "كلمة المرور",
@@ -90,7 +90,7 @@ class LanguageManager:
     def create_english_language_file(self):
         """إنشاء ملف اللغة الإنجليزية"""
         english_translations = {
-            "app_title": "SmokeDash - Cigarette Shop Management System",
+            "app_title": "SmokeDash V3.00 - Premium ERP",
             "login": "Login",
             "username": "Username",
             "password": "Password",

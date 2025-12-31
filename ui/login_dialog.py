@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLineEdit, QPushButton, QMessageBox, QLabel, QFrame, QHBoxLayout
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap
 from components.style_engine import Colors, StyleEngine
 
 class LoginDialog(QDialog):
@@ -24,55 +25,62 @@ class LoginDialog(QDialog):
         self.card.setObjectName("loginCard")
         self.card.setStyleSheet(f"""
             QFrame#loginCard {{
-                background-color: #161b22;
-                border: 1px solid {Colors.BORDER};
-                border-radius: 24px;
+                background-color: {Colors.SECONDARY_BG};
+                border: 2px solid {Colors.ACCENT};
+                border-radius: 10px;
             }}
             QLabel#titleLabel {{
                 font-size: 32px;
                 font-weight: 900;
                 color: {Colors.ACCENT};
-                letter-spacing: 2px;
+                letter-spacing: 0px;
             }}
             QLineEdit {{
-                background-color: #0d1117;
-                border: 1px solid #30363d;
-                border-radius: 12px;
-                padding: 15px;
+                background-color: {Colors.BACKGROUND};
+                border: 1px solid {Colors.ACCENT};
+                border-radius: 0px;
+                padding: 5px;
                 color: {Colors.TEXT_PRIMARY};
                 font-size: 16px;
             }}
             QLineEdit:focus {{
-                border: 1px solid {Colors.ACCENT};
+                border: 2px solid {Colors.TEXT_PRIMARY};
             }}
             QPushButton#loginBtn {{
                 background-color: {Colors.ACCENT};
-                color: white;
-                border-radius: 12px;
+                color: {Colors.BACKGROUND};
+                border-radius: 0px;
                 font-size: 18px;
                 font-weight: bold;
             }}
             QPushButton#loginBtn:hover {{
-                background-color: #79c0ff;
+                background-color: {Colors.TEXT_PRIMARY};
             }}
         """)
         
         card_layout = QVBoxLayout(self.card)
         card_layout.setContentsMargins(40, 40, 40, 40)
-        card_layout.setSpacing(15)
+        card_layout.setSpacing(10)
         
         # Header Section
         header_layout = QVBoxLayout()
         header_layout.setAlignment(Qt.AlignCenter)
         
-        self.logo_lbl = QLabel("SMOKEDASH")
+        from components.utils import resource_path
+        self.logo_pix = QLabel()
+        logo_pix = QPixmap(resource_path("logo.png"))
+        self.logo_pix.setPixmap(logo_pix.scaled(130, 130, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.logo_pix.setAlignment(Qt.AlignCenter)
+        
+        self.logo_lbl = QLabel("SMOKEDASH V3.00")
         self.logo_lbl.setObjectName("titleLabel")
         self.logo_lbl.setAlignment(Qt.AlignCenter)
         
-        self.sub_lbl = QLabel("نظام إدارة مبيعات السجائر المتطور v2.0")
-        self.sub_lbl.setStyleSheet("color: #8b949e; font-size: 14px; margin-bottom: 25px;")
+        self.sub_lbl = QLabel("نظام الإدارة المتميز - الإصدار الثالث")
+        self.sub_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY}; font-size: 16px; margin-bottom: 0px;")
         self.sub_lbl.setAlignment(Qt.AlignCenter)
         
+        header_layout.addWidget(self.logo_pix)
         header_layout.addWidget(self.logo_lbl)
         header_layout.addWidget(self.sub_lbl)
         card_layout.addLayout(header_layout)

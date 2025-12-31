@@ -15,13 +15,13 @@ class ReportsPage(BasePage):
         summary_panel = QFrame()
         summary_panel.setObjectName("statsCard")
         sl = QHBoxLayout(summary_panel)
-        sl.setContentsMargins(30, 30, 30, 30)
+        sl.setContentsMargins(25, 25, 25, 25)
         
         self.total_revenue_lbl = QLabel(f"{self.main_window.lang.get_text('total_revenue')}: 0.00 LYD")
         self.total_debt_lbl = QLabel(f"{self.main_window.lang.get_text('total_debt')}: 0.00 LYD")
         
         for lbl in [self.total_revenue_lbl, self.total_debt_lbl]:
-            lbl.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {Colors.TEXT_PRIMARY};")
+            lbl.setStyleSheet(f"font-size: 20px; font-weight: 800; color: {Colors.ACCENT};")
             sl.addWidget(lbl)
             sl.addStretch()
             

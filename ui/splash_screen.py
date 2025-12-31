@@ -13,13 +13,14 @@ class SplashScreen(QDialog):
         layout.setAlignment(Qt.AlignCenter)
         
         # شعار التطبيق
+        from components.utils import resource_path
         logo_label = QLabel()
-        logo_pixmap = qta.icon("fa5s.smoking", color="#58a6ff").pixmap(128, 128)
-        logo_label.setPixmap(logo_pixmap)
+        logo_pix = QPixmap(resource_path("logo.png"))
+        logo_label.setPixmap(logo_pix.scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         logo_label.setAlignment(Qt.AlignCenter)
         
         # اسم التطبيق
-        name_label = QLabel("SMOKEDASH")
+        name_label = QLabel("SMOKEDASH V3.00")
         name_label.setObjectName("logoLabel")
         name_label.setAlignment(Qt.AlignCenter)
         
@@ -27,10 +28,21 @@ class SplashScreen(QDialog):
         self.progress_bar = QProgressBar()
         self.progress_bar.setTextVisible(False)
         self.progress_bar.setFixedWidth(300)
+        self.progress_bar.setStyleSheet(f"""
+            QProgressBar {{
+                border: 1px solid {Colors.ACCENT};
+                background: {Colors.BACKGROUND};
+                height: 10px;
+            }}
+            QProgressBar::chunk {{
+                background-color: {Colors.ACCENT};
+            }}
+        """)
         
         # رسالة التحميل
+        from components.style_engine import Colors
         self.status_label = QLabel("جاري التحميل...")
-        self.status_label.setStyleSheet("color: #8b949e;")
+        self.status_label.setStyleSheet(f"color: {Colors.TEXT_SECONDARY};")
         self.status_label.setAlignment(Qt.AlignCenter)
         
         layout.addWidget(logo_label)

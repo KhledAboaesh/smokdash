@@ -68,7 +68,6 @@ class POSPage(BasePage):
         
         self.card_btn = QPushButton(self.main_window.lang.get_text("pos_card"))
         self.card_btn.setObjectName("posButton")
-        self.card_btn.setStyleSheet("background-color: #3fb950;")
         self.card_btn.clicked.connect(lambda: self.main_window.process_sale("بطاقة"))
         
         self.debt_btn = QPushButton(self.main_window.lang.get_text("pos_debt"))

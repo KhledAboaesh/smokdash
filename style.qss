@@ -1,52 +1,97 @@
-/* SmokeDash ERP v2.0 Base Stylesheet */
+/* SmokeDash V3.00 - Premium Classic Modernism Stylesheet */
 * {
     font-family: 'Segoe UI', 'Inter', 'Roboto', sans-serif;
     outline: none;
 }
 
 QMainWindow {
-    background-color: #0d1117;
+    background-color: #062C21;
 }
 
 #sidebar {
-    background-color: #161b22;
-    border-right: 1px solid #30363d;
-    min-width: 220px;
+    background-color: #0A3B2C;
+    border-right: 2px solid #D4AF37;
+    min-width: 250px;
 }
 
 #logoLabel {
-    color: #58a6ff;
-    font-size: 20px;
-    font-weight: 800;
+    color: #D4AF37;
+    font-size: 22px;
+    font-weight: 900;
     padding: 30px 10px;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    border-bottom: 2px solid #D4AF37;
+    margin-bottom: 10px;
 }
 
 QPushButton#sidebarBtn {
     text-align: left;
-    padding: 12px 20px;
+    padding: 15px 25px;
     border: none;
-    border-radius: 8px;
-    margin: 4px 15px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #8b949e;
+    border-radius: 0px; /* Rectangular for classic feel */
+    margin: 2px 0px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #C8C4A0;
     background-color: transparent;
 }
 
 QPushButton#sidebarBtn:hover {
-    background-color: rgba(88, 166, 255, 0.1);
-    color: #f0f6fc;
+    background-color: rgba(212, 175, 55, 0.1);
+    color: #FDFCF0;
 }
 
 QPushButton#sidebarBtn:checked {
-    background-color: #1f6feb;
-    color: #ffffff;
+    background-color: rgba(212, 175, 55, 0.2);
+    border-left: 4px solid #D4AF37;
+    color: #FDFCF0;
 }
 
-/* Base Widget Container */
+/* Base Widget Container (Cigarette Box Style) */
 QFrame#statsCard {
-    background-color: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 12px;
+    background-color: #0A3B2C;
+    border: 2px solid #D4AF37;
+    border-radius: 0px;
+}
+
+QLabel {
+    color: #FDFCF0;
+}
+
+QTableWidget {
+    background-color: #0A3B2C;
+    color: #FDFCF0;
+    gridline-color: #D4AF37;
+    border: 2px solid #D4AF37;
+    border-radius: 0px;
+}
+
+QHeaderView::section {
+    background-color: #062C21;
+    color: #D4AF37;
+    padding: 10px;
+    border: 1px solid #D4AF37;
+    font-weight: bold;
+}
+
+QLineEdit {
+    background-color: #062C21;
+    border: 1px solid #D4AF37;
+    color: #FDFCF0;
+    padding: 8px;
+    border-radius: 0px;
+}
+
+QPushButton {
+    background-color: #D4AF37;
+    color: #062C21;
+    border: none;
+    padding: 10px 20px;
+    font-weight: bold;
+    border-radius: 0px;
+}
+
+QPushButton:hover {
+    background-color: #FDFCF0;
+    color: #062C21;
 }

@@ -26,20 +26,20 @@ class ProductDialog(QDialog):
         self.container.setObjectName("statsCard")
         self.container.setStyleSheet(f"""
             QFrame#statsCard {{
-                background-color: #161b22;
-                border: 1px solid {Colors.ACCENT};
-                border-radius: 12px;
+                background-color: {Colors.SECONDARY_BG};
+                border: 2px solid {Colors.ACCENT};
+                border-radius: 0px;
             }}
-            QLabel {{ color: {Colors.TEXT_SECONDARY}; font-weight: 600; }}
+            QLabel {{ color: {Colors.TEXT_PRIMARY}; font-weight: 600; }}
             QLineEdit, QDoubleSpinBox, QSpinBox {{
-                background-color: #0d1117;
-                border: 1px solid #30363d;
-                border-radius: 6px;
+                background-color: {Colors.BACKGROUND};
+                border: 1px solid {Colors.ACCENT};
+                border-radius: 0px;
                 padding: 8px;
                 color: {Colors.TEXT_PRIMARY};
             }}
             QLineEdit:focus, QDoubleSpinBox:focus, QSpinBox:focus {{
-                border: 1px solid {Colors.ACCENT};
+                border: 2px solid {Colors.TEXT_PRIMARY};
             }}
         """)
         
@@ -103,7 +103,7 @@ class ProductDialog(QDialog):
         
         if self.is_edit_mode:
             self.delete_btn = QPushButton("حذف")
-            self.delete_btn.setStyleSheet(f"background-color: {Colors.DANGER}; color: white; border-radius: 6px; padding: 8px;")
+            self.delete_btn.setStyleSheet(f"background-color: {Colors.DANGER}; color: {Colors.TEXT_PRIMARY}; border-radius: 0px; padding: 8px; font-weight: bold;")
             self.delete_btn.clicked.connect(self.delete_product)
             btns_layout.addWidget(self.delete_btn)
             

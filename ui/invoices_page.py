@@ -35,11 +35,15 @@ class InvoicesPage(BasePage):
         self.search_input.setPlaceholderText("بحث برقم الفاتورة أو اسم العميل...")
         self.search_input.setStyleSheet(f"""
             QLineEdit {{
-                background-color: {Colors.SECONDARY_BG};
+                background-color: {Colors.BACKGROUND};
                 color: {Colors.TEXT_PRIMARY};
-                border: 1px solid {Colors.BORDER};
-                border-radius: 8px;
-                padding: 8px;
+                border: 1px solid {Colors.ACCENT};
+                border-radius: 0px;
+                padding: 10px;
+                font-size: 14px;
+            }}
+            QLineEdit:focus {{
+                border: 2px solid {Colors.TEXT_PRIMARY};
             }}
         """)
         self.search_input.textChanged.connect(self.filter_invoices)
@@ -55,24 +59,20 @@ class InvoicesPage(BasePage):
         table_panel.setStyleSheet(f"""
             QFrame#statsCard {{
                 background-color: {Colors.SECONDARY_BG};
-                border-radius: 12px;
-                border: 1px solid {Colors.BORDER};
+                border: 2px solid {Colors.ACCENT};
+                border-radius: 0px;
             }}
             QMenu {{
                 background-color: {Colors.SECONDARY_BG};
                 color: {Colors.TEXT_PRIMARY};
-                border: 1px solid {Colors.BORDER};
+                border: 1px solid {Colors.ACCENT};
             }}
             QMenu::item {{
                 padding: 8px 25px;
-                background-color: transparent;
             }}
             QMenu::item:selected {{
                 background-color: {Colors.ACCENT};
-                color: white;
-            }}
-            QMenu::icon {{
-                padding-left: 10px;
+                color: {Colors.BACKGROUND};
             }}
         """)
         panel_layout = QVBoxLayout(table_panel)
@@ -88,24 +88,20 @@ class InvoicesPage(BasePage):
         self.table.setStyleSheet(f"""
             QTableWidget {{
                 background-color: transparent;
-                gridline-color: {Colors.BORDER};
+                gridline-color: {Colors.ACCENT};
                 color: {Colors.TEXT_PRIMARY};
                 border: none;
-                alternate-background-color: {Colors.BACKGROUND}; 
             }}
             QHeaderView::section {{
                 background-color: {Colors.BACKGROUND};
-                color: {Colors.TEXT_SECONDARY};
+                color: {Colors.ACCENT};
                 padding: 12px;
-                border: none;
+                border: 1px solid {Colors.ACCENT};
                 font-weight: bold;
-            }}
-            QTableWidget::item {{
-                padding: 8px;
             }}
             QTableWidget::item:selected {{
                 background-color: {Colors.ACCENT};
-                color: white;
+                color: {Colors.BACKGROUND};
             }}
         """)
         
