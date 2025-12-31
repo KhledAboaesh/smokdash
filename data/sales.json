@@ -134,5 +134,40 @@
         "payment_method": "Cash",
         "shift_id": "SHFT20251230174940",
         "customer_id": null
+    },
+    {
+        "id": "20251231025054",
+        "timestamp": "2025-12-31T02:50:54.809249",
+        "items": [
+            {
+                "product_id": "20251230175116",
+                "name": "مالبورو احمر",
+                "quantity": 1,
+                "price": 2.5,
+                "total": 2.5
+            }
+        ],
+        "total_amount": 2.5,
+        "payment_method": "Cash",
+        "shift_id": "SHFT20251230174940",
+        "customer_id": null
+    },
+    {
+        "id": "20251231032049164927",
+        "invoice_number": "INV-2025-0001",
+        "timestamp": "2025-12-31T03:20:49.165000",
+        "items": [
+            {
+                "product_id": "20251230175116",
+                "name": "مالبورو احمر",
+                "quantity": 1,
+                "price": 2.5,
+                "total": 2.5
+            }
+        ],
+        "total_amount": 2.5,
+        "payment_method": "Cash",
+        "shift_id": "SHFT20251230174940",
+        "customer_id": null
     }
 ]

@@ -17,5 +17,15 @@
         "full_name": "okjoj ojojo",
         "phone": "091",
         "role": "cashier"
+    },
+    {
+        "username": "",
+        "full_name": "",
+        "phone": "",
+        "role": "cashier",
+        "permissions": [
+            "pos",
+            "customers"
+        ]
     }
 ]

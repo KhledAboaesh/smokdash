@@ -151,8 +151,24 @@ class DataManager:
 
     def add_sale(self, items, total_amount, payment_method, shift_id=None, customer_id=None):
         sales = self.get_sales(use_cache=False)
+        
+        # Generate Unique Invoice Number (INV-YYYY-NNNN)
+        today = datetime.now()
+        year_prefix = f"INV-{today.year}-"
+        last_num = 0
+        for s in sales:
+            inv_no = s.get('invoice_number', '')
+            if inv_no.startswith(year_prefix):
+                try:
+                    num = int(inv_no.split('-')[-1])
+                    if num > last_num: last_num = num
+                except: continue
+        
+        invoice_number = f"{year_prefix}{last_num + 1:04d}"
+        
         sale_data = {
-            "id": datetime.now().strftime("%Y%m%d%H%M%S"),
+            "id": datetime.now().strftime("%Y%m%d%H%M%S%f"), # Added microseconds for higher uniqueness
+            "invoice_number": invoice_number,
             "timestamp": datetime.now().isoformat(),
             "items": items,
             "total_amount": total_amount,
@@ -163,11 +179,38 @@ class DataManager:
         sales.append(sale_data)
         self._save_json(self.sales_file, sales)
         self.cache.set("sales", sales)
+        
+        # Update Stocks
         for item in items:
             self.update_product_stock(item['product_id'], -item['quantity'])
+            
+        # Update Customer Debt
         if payment_method == 'Debt' and customer_id:
             self.update_customer_debt(customer_id, total_amount)
+            
         return sale_data
+
+    def delete_sale(self, sale_id):
+        """Removes a sale, restores stock, and adjusts debt if applicable."""
+        sales = self.get_sales(use_cache=False)
+        sale_to_delete = next((s for s in sales if s['id'] == sale_id or s.get('invoice_number') == sale_id), None)
+        
+        if not sale_to_delete:
+            return False, "الفاتورة غير موجودة"
+            
+        # 1. Restore Stock
+        for item in sale_to_delete.get('items', []):
+            self.update_product_stock(item['product_id'], item['quantity'])
+            
+        # 2. Revert Customer Debt
+        if sale_to_delete.get('payment_method') == 'Debt' and sale_to_delete.get('customer_id'):
+            self.update_customer_debt(sale_to_delete['customer_id'], -sale_to_delete['total_amount'])
+            
+        # 3. Remove Sale
+        sales = [s for s in sales if s['id'] != sale_to_delete['id']]
+        self._save_json(self.sales_file, sales)
+        self.cache.set("sales", sales)
+        return True, "تم حذف الفاتورة وإرجاع الكميات للمخزون"
 
     # Users
     def get_users(self, use_cache=True):

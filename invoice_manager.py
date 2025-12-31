@@ -80,12 +80,8 @@ class InvoiceManager:
             str: The path to the generated PDF file, or None on failure.
         """
         if 'invoice_number' not in sale_data:
-            sale_data['invoice_number'] = self.get_next_invoice_number()
-
-        invoice_path = os.path.join(self.invoice_dir, f"{sale_data['invoice_number']}.pdf")
-        
-        if 'invoice_number' not in sale_data:
-            sale_data['invoice_number'] = self.get_next_invoice_number()
+            print("WARNING: sale_data missing invoice_number. This should not happen now.")
+            sale_data['invoice_number'] = self.get_next_invoice_number() # Fallback for old sales
 
         invoice_path = os.path.join(self.invoice_dir, f"{sale_data['invoice_number']}.pdf")
         
@@ -223,21 +219,38 @@ class InvoiceManager:
     def print_invoice(self, pdf_path):
         """
         Prints the specified PDF invoice using the default system printer.
+        Uses win32api for better reliability on Windows.
         """
         if not pdf_path or not os.path.exists(pdf_path):
-            print("Error: Invoice path does not exist.")
+            print(f"Error: Invoice path does not exist: {pdf_path}")
             return
 
         try:
             if os.name == 'nt': # Windows
-                os.startfile(pdf_path, "print")
-                print(f"Sent to printer: {pdf_path}")
+                import win32api
+                import win32print
+                
+                # Get default printer to verify it exists
+                printer = win32print.GetDefaultPrinter()
+                print(f"Printing to default printer: {printer}")
+                
+                # Use ShellExecute with 'print' verb
+                # This is more robust than os.startfile on some systems
+                win32api.ShellExecute(0, "print", pdf_path, None, ".", 0)
+                print(f"Sent to printer via ShellExecute: {pdf_path}")
             else:
                 # Linux/Mac fallback (lp)
                 os.system(f"lp {pdf_path}")
                 print(f"Sent to printer (lp): {pdf_path}")
         except Exception as e:
             print(f"Error printing invoice: {e}")
+            # Final fallback: just try to open it so user can manually print
+            try:
+                if os.name == 'nt':
+                    os.startfile(pdf_path)
+                    print("Fallback: Opened PDF for manual printing.")
+            except:
+                pass
 
 
 if __name__ == '__main__':

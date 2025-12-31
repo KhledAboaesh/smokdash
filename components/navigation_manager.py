@@ -9,6 +9,7 @@ class NavigationManager:
         self.stack = stack_widget
         self.sidebar_layout = sidebar_layout
         self.nav_btns = {}
+        self.btn_indices = {}
         self.current_index = -1
 
     def add_navigation(self, key, text, icon, page_index, role_required=None):
@@ -24,6 +25,7 @@ class NavigationManager:
         
         self.sidebar_layout.addWidget(btn)
         self.nav_btns[key] = btn
+        self.btn_indices[btn] = page_index
         return btn
 
     def switch_page(self, index):
@@ -34,6 +36,6 @@ class NavigationManager:
         self.current_index = index
         
         # Update button states
-        for i, btn in enumerate(self.nav_btns.values()):
-            btn.setChecked(i == index)
+        for btn in self.nav_btns.values():
+            btn.setChecked(self.btn_indices.get(btn) == index)
             # We could also use StyleEngine to apply transitions here

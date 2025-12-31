@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QLineEdit, QHBoxLayout, QPushButton, QMessageBox, QLabel, QFrame, QComboBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QLineEdit, QHBoxLayout, QPushButton, QMessageBox, QLabel, QFrame, QComboBox, QCheckBox, QGridLayout
 from PySide6.QtCore import Qt
 from components.style_engine import Colors, StyleEngine
 
@@ -60,11 +60,39 @@ class UserDialog(QDialog):
         
         form.addRow("اسم المستخدم:", self.username_input)
         form.addRow("كلمة المرور:", self.password_input)
-        form.addRow("الاسم الكامل:", self.fullname_input)
         form.addRow("رقم الهاتف:", self.phone_input)
         form.addRow("الدور الوظيفي:", self.role_combo)
         
         layout.addLayout(form)
+        
+        # Permissions Section
+        perm_label = QLabel("صلاحيات الوصول:")
+        perm_label.setStyleSheet(f"color: {Colors.ACCENT}; font-weight: bold; margin-top: 10px;")
+        layout.addWidget(perm_label)
+        
+        perm_grid = QGridLayout()
+        self.perm_checks = {}
+        pages = [
+            ("dashboard", "لوحة التحكم"),
+            ("pos", "نقطة البيع"),
+            ("invoices", "الفواتير"),
+            ("inventory", "المخزون"),
+            ("customers", "العملاء"),
+            ("users", "الموظفين"),
+            ("reports", "التقارير"),
+            ("settings", "الإعدادات")
+        ]
+        
+        for i, (key, label) in enumerate(pages):
+            chk = QCheckBox(label)
+            chk.setStyleSheet(f"color: {Colors.TEXT_PRIMARY};")
+            perm_grid.addWidget(chk, i // 2, i % 2)
+            self.perm_checks[key] = chk
+            
+        layout.addLayout(perm_grid)
+        
+        # Connect Role to Limits
+        self.role_combo.currentTextChanged.connect(self.apply_role_presets)
         
         btns = QHBoxLayout()
         save_btn = QPushButton("حفظ")
@@ -90,6 +118,24 @@ class UserDialog(QDialog):
             self.fullname_input.setText(self.user_data.get('full_name', ''))
             self.phone_input.setText(self.user_data.get('phone', ''))
             self.role_combo.setCurrentText(self.user_data.get('role', 'cashier'))
+            
+            # Load Permissions
+            saved_perms = self.user_data.get('permissions', [])
+            # compatibility: if no perms, check role
+            if not saved_perms:
+                 # Logic handled by preset usually, but here we might load empty.
+                 # If empty and role is admin, give all.
+                 pass 
+            
+            for k, chk in self.perm_checks.items():
+                if saved_perms:
+                    chk.setChecked(k in saved_perms)
+                else:
+                    # Fallback for existing users without permissions list
+                    if self.user_data.get('role') == 'admin':
+                         chk.setChecked(True)
+                    elif self.user_data.get('role') == 'cashier':
+                         chk.setChecked(k in ['pos'])
 
     def get_data(self):
         data = {
@@ -100,4 +146,23 @@ class UserDialog(QDialog):
         }
         if self.password_input.text():
             data["password"] = self.password_input.text()
+            
+        # Collect Permissions
+        perms = [k for k, chk in self.perm_checks.items() if chk.isChecked()]
+        data['permissions'] = perms
+        
         return data
+
+    def apply_role_presets(self, role):
+        # Auto-check based on role? Only if adding new user or user wants valid defaults
+        # We only apply if it's not edit mode OR we want to force reset.
+        # Better: apply if explicit action? Or just soft apply.
+        # Let's simple apply on change.
+        if role == 'admin':
+            for chk in self.perm_checks.values(): chk.setChecked(True)
+        elif role == 'cashier':
+            for k, chk in self.perm_checks.items():
+                chk.setChecked(k in ['pos', 'customers']) # Basic cashier
+        elif role == 'manager':
+             for k, chk in self.perm_checks.items():
+                chk.setChecked(k in ['dashboard', 'pos', 'inventory', 'customers', 'reports'])

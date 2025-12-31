@@ -119,7 +119,7 @@ class LoginDialog(QDialog):
         password = self.password_input.text()
         users = self.db.get_users()
         
-        user = next((u for u in users if u['username'] == username and u['password'] == password), None)
+        user = next((u for u in users if u.get('username') == username and u.get('password') == password), None)
         if user:
             self.user_data = user
             self.accept()

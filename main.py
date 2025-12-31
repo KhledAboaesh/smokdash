@@ -35,7 +35,11 @@ from ui.inventory_page import InventoryPage
 from ui.customers_page import CustomersPage
 from ui.users_page import UserPermissionsPage
 from ui.reports_page import ReportsPage
+from ui.customers_page import CustomersPage
+from ui.users_page import UserPermissionsPage
+from ui.reports_page import ReportsPage
 from ui.settings_page import SettingsPage
+from ui.invoices_page import InvoicesPage
 from ui.product_dialog import ProductDialog
 from ui.customer_dialog import CustomerDialog
 from ui.user_dialog import UserDialog
@@ -69,7 +73,7 @@ class MainWindow(QMainWindow):
         
         # 4. Routing & Pages
         self.nav_manager = NavigationManager(self, self.content_stack, self.sidebar_layout)
-        self.initialize_pages()
+        start_idx = self.initialize_pages()
         
         # 5. Global Features
         self.setup_statusbar()
@@ -83,7 +87,7 @@ class MainWindow(QMainWindow):
         self.refresh_data()
         
         # Start
-        self.nav_manager.switch_page(0)
+        self.nav_manager.switch_page(start_idx)
 
     def setup_managers(self):
         self.backup_mgr = BackupManager()
@@ -137,22 +141,61 @@ class MainWindow(QMainWindow):
         self.users_page = UserPermissionsPage(self)
         self.reports_page = ReportsPage(self)
         self.settings_page = SettingsPage(self)
+        self.invoices_page = InvoicesPage(self)
         
-        self.content_stack.addWidget(self.dashboard_page)
-        self.content_stack.addWidget(self.pos_page)
-        self.content_stack.addWidget(self.inventory_page)
-        self.content_stack.addWidget(self.customers_page)
-        self.content_stack.addWidget(self.users_page)
-        self.content_stack.addWidget(self.reports_page)
-        self.content_stack.addWidget(self.settings_page)
+        # Determine Permissions
+        perms = self.user_data.get('permissions', [])
+        role = self.user_data.get('role', 'cashier')
         
-        self.nav_manager.add_navigation("dashboard", self.lang.get_text("dashboard"), "fa5s.chart-line", 0)
-        self.nav_manager.add_navigation("pos", self.lang.get_text("pos"), "fa5s.shopping-cart", 1)
-        self.nav_manager.add_navigation("inventory", self.lang.get_text("inventory"), "fa5s.boxes", 2)
-        self.nav_manager.add_navigation("customers", self.lang.get_text("customers"), "fa5s.users", 3)
-        self.nav_manager.add_navigation("users", self.lang.get_text("users"), "fa5s.user-shield", 4)
-        self.nav_manager.add_navigation("reports", self.lang.get_text("reports"), "fa5s.file-invoice", 5)
-        self.nav_manager.add_navigation("settings", self.lang.get_text("settings"), "fa5s.cog", 6)
+        # Legacy/Default Fallback
+        if not perms:
+            if role == 'admin':
+                perms = ['dashboard', 'pos', 'inventory', 'customers', 'users', 'reports', 'settings', 'invoices']
+            else:
+                 # Default for cashier/others
+                perms = ['pos', 'customers', 'invoices']
+        
+        # Register Pages & Navigation if permitted
+        self.available_pages = []
+        
+        def add_page(key, page_widget, label, icon, index_id):
+            if key in perms:
+                self.content_stack.addWidget(page_widget)
+                self.nav_manager.add_navigation(key, label, icon, index_id)
+                self.available_pages.append(index_id)
+        
+        # Add all to stack first to keep indices consistent (0=Dash, 1=POS, etc)
+        self.content_stack.addWidget(self.dashboard_page) # 0
+        self.content_stack.addWidget(self.pos_page)       # 1
+        self.content_stack.addWidget(self.inventory_page) # 2
+        self.content_stack.addWidget(self.customers_page) # 3
+        self.content_stack.addWidget(self.users_page)     # 4
+        self.content_stack.addWidget(self.reports_page)   # 5
+        self.content_stack.addWidget(self.settings_page)  # 6
+        self.content_stack.addWidget(self.invoices_page)  # 7
+        
+        # Register Nav Buttons conditionally
+        # Updated icons for visual hierarchy
+        if 'dashboard' in perms: self.nav_manager.add_navigation("dashboard", self.lang.get_text("dashboard"), "fa5s.chart-line", 0)
+        if 'pos' in perms: self.nav_manager.add_navigation("pos", self.lang.get_text("pos"), "fa5s.shopping-cart", 1)
+        if 'invoices' in perms: self.nav_manager.add_navigation("invoices", "الفواتير", "fa5s.file-invoice", 7)
+        if 'inventory' in perms: self.nav_manager.add_navigation("inventory", self.lang.get_text("inventory"), "fa5s.boxes", 2)
+        if 'customers' in perms: self.nav_manager.add_navigation("customers", self.lang.get_text("customers"), "fa5s.users", 3)
+        if 'users' in perms: self.nav_manager.add_navigation("users", self.lang.get_text("users"), "fa5s.user-shield", 4)
+        if 'reports' in perms: self.nav_manager.add_navigation("reports", self.lang.get_text("reports"), "fa5s.chart-bar", 5)
+        if 'settings' in perms: self.nav_manager.add_navigation("settings", self.lang.get_text("settings"), "fa5s.cog", 6)
+
+        # Determine start page
+        start_index = 0
+        priority_order = ['dashboard', 'pos', 'invoices', 'inventory', 'customers', 'users', 'reports', 'settings']
+        page_indices = {'dashboard':0, 'pos':1, 'inventory':2, 'customers':3, 'users':4, 'reports':5, 'settings':6, 'invoices':7}
+        
+        for p in priority_order:
+            if p in perms:
+                start_index = page_indices[p]
+                break
+        
+        return start_index
 
     # --- POS Logic ---
     def search_pos_products(self):
@@ -265,6 +308,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'customers_page'): self.customers_page.refresh()
         if hasattr(self, 'users_page'): self.users_page.refresh()
         if hasattr(self, 'reports_page'): self.reports_page.refresh()
+        if hasattr(self, 'invoices_page'): self.invoices_page.refresh()
 
     # --- User Permissions Logic ---
     def add_user_dialog(self):
