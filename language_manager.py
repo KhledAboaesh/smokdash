@@ -1,6 +1,7 @@
 # language_manager.py
 import json
 import os
+from components.utils import resource_path
 
 class LanguageManager:
     def __init__(self):
@@ -10,7 +11,7 @@ class LanguageManager:
     
     def load_languages(self):
         """تحميل ملفات اللغة"""
-        lang_dir = "languages"
+        lang_dir = resource_path("languages")
         if not os.path.exists(lang_dir):
             os.makedirs(lang_dir)
             
@@ -83,7 +84,7 @@ class LanguageManager:
             "password_show": "كلمة المرور"
         }
         
-        with open("languages/ar.json", 'w', encoding='utf-8') as f:
+        with open(resource_path("languages/ar.json"), 'w', encoding='utf-8') as f:
             json.dump(arabic_translations, f, ensure_ascii=False, indent=2)
     
     def create_english_language_file(self):
@@ -144,7 +145,7 @@ class LanguageManager:
             "password_show": "Password"
         }
         
-        with open("languages/en.json", 'w', encoding='utf-8') as f:
+        with open(resource_path("languages/en.json"), 'w', encoding='utf-8') as f:
             json.dump(english_translations, f, ensure_ascii=False, indent=2)
     
     def get_text(self, key, lang=None):

@@ -1,0 +1,14 @@
+[
+    {
+        "username": "admin",
+        "password": "123",
+        "role": "admin",
+        "full_name": "مدير النظام"
+    },
+    {
+        "username": "cashier",
+        "password": "123",
+        "role": "cashier",
+        "full_name": "موظف مبيعات"
+    }
+]

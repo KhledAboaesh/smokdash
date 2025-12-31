@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PySide6.QtCore import Qt, QSize, QTimer, QDate
 from PySide6.QtGui import QColor, QPixmap, QAction
 import qtawesome as qta
+from components.utils import resource_path
 
 # Import Managers
 from data_manager import DataManager
@@ -102,10 +103,12 @@ class MainWindow(QMainWindow):
 
     def set_app_styling(self):
         try:
-            with open("style.qss", "r", encoding='utf-8') as f:
-                self.setStyleSheet(f.read())
-        except:
-            pass
+            style_path = resource_path("style.qss")
+            if os.path.exists(style_path):
+                with open(style_path, "r", encoding='utf-8') as f:
+                    self.setStyleSheet(f.read())
+        except Exception as e:
+            print(f"Error loading stylesheet: {e}")
 
     def setup_ui_shell(self):
         self.central_widget = QWidget()
