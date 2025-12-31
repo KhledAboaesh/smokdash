@@ -66,7 +66,7 @@ class LanguageManager:
             "stock_count": "الأصناف المتوفرة",
             "db_status": "قاعدة البيانات",
             "quick_backup": "نسخ احتياطي سريع",
-            "pos_cash": "نقد",
+            "pos_cash": "نقداً",
             "pos_card": "بطاقة",
             "pos_debt": "دين",
             "recent_sales": "آخر العمليات",

@@ -185,7 +185,7 @@ class DataManager:
             self.update_product_stock(item['product_id'], -item['quantity'])
             
         # Update Customer Debt
-        if payment_method == 'Debt' and customer_id:
+        if payment_method == 'دين' and customer_id:
             self.update_customer_debt(customer_id, total_amount)
             
         return sale_data
@@ -203,7 +203,7 @@ class DataManager:
             self.update_product_stock(item['product_id'], item['quantity'])
             
         # 2. Revert Customer Debt
-        if sale_to_delete.get('payment_method') == 'Debt' and sale_to_delete.get('customer_id'):
+        if sale_to_delete.get('payment_method') == 'دين' and sale_to_delete.get('customer_id'):
             self.update_customer_debt(sale_to_delete['customer_id'], -sale_to_delete['total_amount'])
             
         # 3. Remove Sale

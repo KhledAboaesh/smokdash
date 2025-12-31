@@ -242,7 +242,7 @@ class MainWindow(QMainWindow):
 
     def process_sale(self, method):
         customer_id = None
-        if method == "Debt":
+        if method == "دين":
             # Select customer for debt
             from PySide6.QtWidgets import QInputDialog
             customers = self.db.get_customers()

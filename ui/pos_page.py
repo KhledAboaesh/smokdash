@@ -64,16 +64,16 @@ class POSPage(BasePage):
         btn_box = QHBoxLayout()
         self.pay_btn = QPushButton(self.main_window.lang.get_text("pos_cash"))
         self.pay_btn.setObjectName("posButton")
-        self.pay_btn.clicked.connect(lambda: self.main_window.process_sale("Cash"))
+        self.pay_btn.clicked.connect(lambda: self.main_window.process_sale("نقداً"))
         
         self.card_btn = QPushButton(self.main_window.lang.get_text("pos_card"))
         self.card_btn.setObjectName("posButton")
         self.card_btn.setStyleSheet("background-color: #3fb950;")
-        self.card_btn.clicked.connect(lambda: self.main_window.process_sale("Card"))
+        self.card_btn.clicked.connect(lambda: self.main_window.process_sale("بطاقة"))
         
         self.debt_btn = QPushButton(self.main_window.lang.get_text("pos_debt"))
         self.debt_btn.setObjectName("inventoryButton")
-        self.debt_btn.clicked.connect(lambda: self.main_window.process_sale("Debt"))
+        self.debt_btn.clicked.connect(lambda: self.main_window.process_sale("دين"))
         
         self.clear_btn = QPushButton("إفراغ")
         self.clear_btn.setStyleSheet(f"color: {Colors.DANGER}; border: 1px solid {Colors.DANGER}; padding: 8px;")

@@ -12,7 +12,7 @@
             }
         ],
         "total_amount": 2.5,
-        "payment_method": "Cash",
+        "payment_method": "نقداً",
         "shift_id": "SHFT20251230174940",
         "customer_id": null
     },
@@ -29,7 +29,7 @@
             }
         ],
         "total_amount": 2.5,
-        "payment_method": "Debt",
+        "payment_method": "دين",
         "shift_id": "SHFT20251230174940",
         "customer_id": "CUST20251230175215"
     },
@@ -46,7 +46,7 @@
             }
         ],
         "total_amount": 5.0,
-        "payment_method": "Debt",
+        "payment_method": "دين",
         "shift_id": "SHFT20251230174940",
         "customer_id": "CUST20251230175215"
     },
@@ -63,7 +63,7 @@
             }
         ],
         "total_amount": 5.0,
-        "payment_method": "Cash",
+        "payment_method": "نقداً",
         "shift_id": "SHFT20251230174940",
         "customer_id": null
     },
@@ -80,7 +80,7 @@
             }
         ],
         "total_amount": 5.0,
-        "payment_method": "Debt",
+        "payment_method": "دين",
         "shift_id": "SHFT20251230174940",
         "customer_id": null
     },
@@ -97,7 +97,7 @@
             }
         ],
         "total_amount": 5.0,
-        "payment_method": "Card",
+        "payment_method": "بطاقة",
         "shift_id": "SHFT20251230174940",
         "customer_id": null
     },
@@ -114,7 +114,7 @@
             }
         ],
         "total_amount": 5.0,
-        "payment_method": "Card",
+        "payment_method": "بطاقة",
         "shift_id": "SHFT20251230174940",
         "customer_id": null
     },
@@ -131,7 +131,7 @@
             }
         ],
         "total_amount": 2.5,
-        "payment_method": "Cash",
+        "payment_method": "نقداً",
         "shift_id": "SHFT20251230174940",
         "customer_id": null
     },
@@ -148,7 +148,7 @@
             }
         ],
         "total_amount": 2.5,
-        "payment_method": "Cash",
+        "payment_method": "نقداً",
         "shift_id": "SHFT20251230174940",
         "customer_id": null
     },
@@ -166,7 +166,7 @@
             }
         ],
         "total_amount": 2.5,
-        "payment_method": "Cash",
+        "payment_method": "نقداً",
         "shift_id": "SHFT20251230174940",
         "customer_id": null
     }
