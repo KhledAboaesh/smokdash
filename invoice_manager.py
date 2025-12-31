@@ -6,25 +6,29 @@ from datetime import datetime
 try:
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import letter
-    from reportlab.lib.units import inch
+    from reportlab.lib.units import inch, mm
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
     from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import Paragraph
-    from reportlab.lib.colors import HexColor
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle, Spacer, Image
+    from reportlab.lib.colors import HexColor, white, black
+    from reportlab.lib.utils import ImageReader
+    import arabic_reshaper
+    from bidi.algorithm import get_display
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 except ImportError:
-    raise ImportError("ReportLab library not found. Please install it using: pip install reportlab")
+    pass
 
-# For Arabic text, we need to use a font that supports it.
-# This requires a .ttf font file. We'll assume one is available.
-# A good open-source choice is 'DejaVuSans'.
-# We will check for it and handle potential errors.
-ARABIC_FONT_NAME = "DejaVuSans"
+# Register Arial for decent Arabic support (standard Windows font)
+ARABIC_FONT_NAME = "Arial"
 try:
-    pdfmetrics.registerFont(TTFont(ARABIC_FONT_NAME, 'DejaVuSans.ttf'))
+    # Try typical Windows path or assume it's system available
+    pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
+    pdfmetrics.registerFont(TTFont('Arial-Bold', 'arialbd.ttf'))
 except:
-    print("WARNING: DejaVuSans.ttf not found. Arabic text in PDFs may not render correctly.")
-    ARABIC_FONT_NAME = "Helvetica" # Fallback
+    # Fallback to Helvetica if Arial not found (won't look good for Arabic but avoids crash)
+    print("WARNING: Arial font not found. Arabic may not render.")
+    ARABIC_FONT_NAME = "Helvetica"
 
 
 class InvoiceManager:
@@ -80,87 +84,160 @@ class InvoiceManager:
 
         invoice_path = os.path.join(self.invoice_dir, f"{sale_data['invoice_number']}.pdf")
         
+        if 'invoice_number' not in sale_data:
+            sale_data['invoice_number'] = self.get_next_invoice_number()
+
+        invoice_path = os.path.join(self.invoice_dir, f"{sale_data['invoice_number']}.pdf")
+        
         shop_name = settings.get('shop_name', 'SmokeDash')
         currency = settings.get('currency', 'LYD')
+        logo_path = settings.get('logo_path', None)
+        show_logo = settings.get('show_logo', True)
 
         try:
-            c = canvas.Canvas(invoice_path, pagesize=letter)
-            width, height = letter
+            # 1. Prepare Elements & Styles
+            page_width = 80 * mm
+            margin = 2 * mm
+            printable_width = page_width - (2 * margin)
+            
+            elements = []
+            
+            # Styles
+            styles = getSampleStyleSheet()
+            style_nc = styles['Normal']
+            style_nc.fontName = ARABIC_FONT_NAME
+            style_nc.fontSize = 10
+            style_nc.alignment = TA_CENTER
+            style_nc.leading = 12
 
-            # --- Helper for Arabic text ---
-            def draw_arabic_text(text, x, y, size=12, color_hex="#000000"):
-                p = Paragraph(text, style=getSampleStyleSheet()['Normal'])
-                p.fontName = ARABIC_FONT_NAME
-                p.fontSize = size
-                p.textColor = HexColor(color_hex)
-                p.wrapOn(c, width - 2*inch, height)
-                p.drawOn(c, x, y)
+            style_right = styles['Normal']
+            style_right.fontName = ARABIC_FONT_NAME
+            style_right.fontSize = 9
+            style_right.alignment = TA_RIGHT
+            
+            style_left = styles['Normal']
+            style_left.fontName = ARABIC_FONT_NAME
+            style_left.fontSize = 9
+            style_left.alignment = TA_LEFT
 
-            # --- Header ---
-            c.setFont(ARABIC_FONT_NAME, 24)
-            c.setFillColor(HexColor("#333333"))
-            c.drawRightString(width - 1*inch, height - 1*inch, shop_name)
-            c.setFont("Helvetica-Bold", 16)
-            c.drawRightString(width - 1*inch, height - 1.3*inch, "INVOICE / فاتورة")
+            def reshape(text):
+                try:
+                    return get_display(arabic_reshaper.reshape(str(text)))
+                except:
+                    return str(text)
 
+            # --- Logo ---
+            if show_logo and logo_path and os.path.exists(logo_path):
+                img = Image(logo_path)
+                img.drawHeight = 35 * mm
+                img.drawWidth = 35 * mm * (img.imageWidth / img.imageHeight)
+                if img.drawWidth > 70 * mm:
+                     img.drawWidth = 70 * mm
+                     img.drawHeight = 70 * mm * (img.imageHeight / img.imageWidth)
+                elements.append(img)
+                elements.append(Spacer(1, 5))
+
+            # --- Shop Name ---
+            elements.append(Paragraph(reshape(shop_name), style_nc))
+            elements.append(Spacer(1, 5))
+            
             # --- Invoice Info ---
-            c.setFont("Helvetica", 10)
-            info_y = height - 2 * inch
-            c.drawString(1*inch, info_y, f"Invoice #: {sale_data['invoice_number']}")
-            sale_time = datetime.fromisoformat(sale_data['timestamp']).strftime('%Y-%m-%d %H:%M')
-            c.drawString(1*inch, info_y - 20, f"Date: {sale_time}")
+            elements.append(Paragraph("--------------------------------", style_nc))
+            elements.append(Paragraph(f"NO: {sale_data['invoice_number']}", style_nc))
+            t_str = sale_data['timestamp'].replace('T', ' ').split('.')[0]
+            elements.append(Paragraph(t_str, style_nc))
             
             if customer_data:
-                c.drawString(1*inch, info_y - 60, "Bill To / العميل:")
-                draw_arabic_text(customer_data['name'], 1*inch, info_y - 80, size=10)
-                if customer_data.get('phone'):
-                    c.drawString(1*inch, info_y - 100, customer_data['phone'])
+                 elements.append(Paragraph(reshape(f"العميل: {customer_data['name']}"), style_nc))
             
-            # --- Table Header ---
-            table_y = info_y - 140
-            c.setFont("Helvetica-Bold", 11)
-            c.setFillColor(HexColor("#ffffff"))
-            c.rect(1*inch, table_y - 5, width - 2*inch, 25, fill=1, stroke=0)
-            c.setFillColor(HexColor("#000000"))
-            c.drawRightString(width - 1.2*inch, table_y, "Item / الصنف")
-            c.drawRightString(width - 3.5*inch, table_y, "Qty / الكمية")
-            c.drawRightString(width - 4.8*inch, table_y, "Unit Price / السعر")
-            c.drawRightString(width - 6*inch, table_y, "Total / الإجمالي")
-
-            # --- Table Rows ---
-            c.setFont("Helvetica", 10)
-            current_y = table_y - 30
+            elements.append(Paragraph("--------------------------------", style_nc))
+            
+            # --- Items Table ---
+            data = [[reshape("الإجمالي"), reshape("السعر"), reshape("ع"), reshape("الصنف")]]
+            
             for item in sale_data['items']:
-                draw_arabic_text(item['name'], width - 1.2*inch, current_y, size=10)
-                c.drawRightString(width - 3.5*inch, current_y, str(item['quantity']))
-                c.drawRightString(width - 4.8*inch, current_y, f"{item['price']:.2f}")
-                item_total = item['quantity'] * item['price']
-                c.drawRightString(width - 6*inch, current_y, f"{item_total:.2f}")
-                current_y -= 25
-
-            # --- Total ---
-            total_y = current_y - 30
-            c.setFont("Helvetica-Bold", 12)
-            total_text = f"Total / الإجمالي: {sale_data['total_amount']:.2f} {currency}"
-            draw_arabic_text(total_text, width - 1.2*inch, total_y)
-
-            payment_map = {"Cash": "نقداً", "Card": "بطاقة", "Debt": "آجل"}
-            payment_text = f"Payment Method: {payment_map.get(sale_data['payment_method'], 'N/A')}"
-            draw_arabic_text(payment_text, width - 1.2*inch, total_y - 25, size=10)
-
-
-            # --- Footer ---
-            c.setFont("Helvetica-Oblique", 9)
-            c.setFillColor(HexColor("#888888"))
-            footer_text = "Thank you for your business! شكراً لتعاملكم معنا!"
-            draw_arabic_text(footer_text, width / 2 - c.stringWidth(footer_text, "Helvetica", 9)/2, 0.5*inch)
-
-            c.save()
-            print(f"Successfully generated invoice: {invoice_path}")
+                name = reshape(item['name'])
+                name_para = Paragraph(name, style_right)
+                qty = str(item['quantity'])
+                price = f"{item['price']:.2f}"
+                total = f"{item['quantity'] * item['price']:.2f}"
+                data.append([total, price, qty, name_para])
+            
+            t = Table(data, colWidths=[18*mm, 15*mm, 8*mm, 34*mm])
+            t.setStyle(TableStyle([
+                ('FONT', (0,0), (-1,-1), ARABIC_FONT_NAME, 8),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('LINEBELOW', (0,0), (-1,0), 1, black),
+                ('LINEBELOW', (0,-1), (-1,-1), 0.5, HexColor('#aaaaaa')),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+                ('TOPPADDING', (0,0), (-1,-1), 2),
+            ]))
+            elements.append(t)
+            
+            elements.append(Paragraph("--------------------------------", style_nc))
+            
+            # --- Totals ---
+            total_val = f"{sale_data['total_amount']:.2f} {currency}"
+            t_data = [
+                [total_val, reshape("الإجمالي:")],
+                [reshape(sale_data.get('payment_method', '')), reshape("طريقة الدفع:")]
+            ]
+            t_tot = Table(t_data, colWidths=[40*mm, 35*mm])
+            t_tot.setStyle(TableStyle([
+                ('FONT', (0,0), (-1,-1), ARABIC_FONT_NAME, 10),
+                ('ALIGN', (0,0), (0,-1), 'LEFT'),
+                ('ALIGN', (1,0), (1,-1), 'RIGHT'),
+                ('FONTNAME', (0,0), (-1,0), 'Arial-Bold'),
+                ('TEXTCOLOR', (0,0), (-1,0), black),
+            ]))
+            elements.append(t_tot)
+            
+            elements.append(Paragraph(reshape("شكراً لزيارتكم!"), style_nc))
+            elements.append(Spacer(1, 10))
+            
+            # 2. Calculate Total Height
+            total_height = 0
+            for elem in elements:
+                w, h = elem.wrap(printable_width, 10000) # Wrap with infinite height
+                total_height += h
+            
+            # Add margins
+            total_height += (2 * margin) + 10 # Buffer
+            
+            # 3. Create Document with Calculated Height
+            doc = SimpleDocTemplate(invoice_path, pagesize=(page_width, total_height),
+                                    rightMargin=margin, leftMargin=margin,
+                                    topMargin=margin, bottomMargin=margin)
+            
+            doc.build(elements)
+            print(f"Successfully generated dynamic invoice ({total_height/mm:.1f}mm): {invoice_path}")
             return invoice_path
+
         except Exception as e:
             print(f"Error generating PDF invoice: {e}")
+            import traceback
+            traceback.print_exc()
             return None
+
+    def print_invoice(self, pdf_path):
+        """
+        Prints the specified PDF invoice using the default system printer.
+        """
+        if not pdf_path or not os.path.exists(pdf_path):
+            print("Error: Invoice path does not exist.")
+            return
+
+        try:
+            if os.name == 'nt': # Windows
+                os.startfile(pdf_path, "print")
+                print(f"Sent to printer: {pdf_path}")
+            else:
+                # Linux/Mac fallback (lp)
+                os.system(f"lp {pdf_path}")
+                print(f"Sent to printer (lp): {pdf_path}")
+        except Exception as e:
+            print(f"Error printing invoice: {e}")
 
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QTabWidget, QWidget,
                              QDateEdit, QSpinBox, QComboBox, QFrame, QTableWidgetItem)
 from PySide6.QtCore import QDate, Qt
 from components.style_engine import Colors, StyleEngine
+from components.chart_widget import SalesChart
 
 class AdvancedReportsDialog(QDialog):
     def __init__(self, db, parent=None):
@@ -106,16 +107,15 @@ class AdvancedReportsDialog(QDialog):
         
         # Content Split (Table + Placeholder for chart)
         content = QHBoxLayout()
-        self.daily_table = QTableWidget(0, 3)
-        self.daily_table.setHorizontalHeaderLabels(["التاريخ", "العمليات", "الإجمالي"])
+        self.daily_table = QTableWidget(0, 4)
+        self.daily_table.setHorizontalHeaderLabels(["التاريخ", "العمليات", "الإجمالي", "رقم الفاتورة"])
+        self.daily_table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.daily_table.customContextMenuRequested.connect(self.show_context_menu)
         content.addWidget(self.daily_table, 1)
         
-        chart_mock = QFrame()
-        chart_mock.setObjectName("statsCard")
-        chart_mock.setStyleSheet("background-color: rgba(88, 166, 255, 0.05);")
-        chart_mock_layout = QVBoxLayout(chart_mock)
-        chart_mock_layout.addWidget(QLabel("مساحة الرسم البياني للمبيعات"), 0, Qt.AlignCenter)
-        content.addWidget(chart_mock, 1)
+        self.chart = SalesChart()
+        # self.chart.setFixedHeight(300) # Optional
+        content.addWidget(self.chart, 1)
         
         layout.addLayout(content)
         self.refresh_daily_sales()
@@ -134,22 +134,56 @@ class AdvancedReportsDialog(QDialog):
         return tab
 
     def refresh_daily_sales(self):
-        # Implementation of data aggregation logic
+        # Sales list logic
         sales = self.db.get_sales_by_date_range(self.start_date.date().toPython(), self.end_date.date().toPython())
-        stats = {}
+        
+        # Aggregate for Chart
+        chart_data = {}
         for s in sales:
             d = s['timestamp'].split('T')[0]
-            if d not in stats: stats[d] = {'count': 0, 'total': 0.0}
-            stats[d]['count'] += 1
-            stats[d]['total'] += s['total_amount']
-            
+            chart_data[d] = chart_data.get(d, 0) + s['total_amount']
+        self.chart.set_data(chart_data)
+
         self.daily_table.setRowCount(0)
-        for d, data in sorted(stats.items(), reverse=True):
+        # Headers: Invoice #, Date, Items Count, Total, Payment
+        self.daily_table.setColumnCount(5)
+        self.daily_table.setHorizontalHeaderLabels([
+             "رقم الفاتورة", "التوقيت", "عدد الأصناف", "الإجمالي", "الدفع"
+        ])
+        
+        for s in reversed(sales):
             row = self.daily_table.rowCount()
             self.daily_table.insertRow(row)
-            self.daily_table.setItem(row, 0, QTableWidgetItem(d))
-            self.daily_table.setItem(row, 1, QTableWidgetItem(str(data['count'])))
-            self.daily_table.setItem(row, 2, QTableWidgetItem(f"{data['total']:.2f}"))
+            self.daily_table.setItem(row, 0, QTableWidgetItem(s.get('invoice_number', 'N/A')))
+            t_str = s['timestamp'].replace('T', ' ').split('.')[0]
+            self.daily_table.setItem(row, 1, QTableWidgetItem(t_str))
+            self.daily_table.setItem(row, 2, QTableWidgetItem(str(len(s['items']))))
+            self.daily_table.setItem(row, 3, QTableWidgetItem(f"{s['total_amount']:.2f}"))
+            self.daily_table.setItem(row, 4, QTableWidgetItem(s.get('payment_method', 'N/A')))
+            # Store full sale object in item data for printing
+            self.daily_table.item(row, 0).setData(Qt.UserRole, s)
+
+    def show_context_menu(self, pos):
+        from PySide6.QtWidgets import QMenu
+        menu = QMenu(self)
+        print_action = menu.addAction("طباعة الفاتورة")
+        action = menu.exec(self.daily_table.viewport().mapToGlobal(pos))
+        if action == print_action:
+            self.print_selected_invoice()
+
+    def print_selected_invoice(self):
+        row = self.daily_table.currentRow()
+        if row < 0: return
+        sale_data = self.daily_table.item(row, 0).data(Qt.UserRole)
+        if sale_data:
+            from invoice_manager import InvoiceManager
+            mw = self.parent()
+            if hasattr(mw, 'settings'):
+                mgr = InvoiceManager(self.db)
+                path = mgr.generate_pdf_invoice(sale_data, mw.settings)
+                if path:
+                    from PySide6.QtWidgets import QMessageBox
+                    QMessageBox.information(self, "تم", f"تم إعادة إصدار الفاتورة:\n{path}")
 
     def refresh_top_products(self):
         sales = self.db.get_sales()

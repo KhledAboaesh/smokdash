@@ -213,12 +213,20 @@ class MainWindow(QMainWindow):
             customer_id = customer['id']
 
         shift_id = self.active_shift['id'] if self.active_shift else "manual"
-        success, msg = self.pos_ctrl.process_sale(method, shift_id, customer_id)
+        success, msg, sale_data = self.pos_ctrl.process_sale(method, shift_id, customer_id)
         
         if success:
             self.update_cart_ui()
             self.refresh_data()
             self.search_pos_products()
+            
+            # Auto-Print Logic
+            if self.settings.get('auto_print', False) and sale_data:
+                path = self.invoice_mgr.generate_pdf_invoice(sale_data, self.settings)
+                if path:
+                    self.invoice_mgr.print_invoice(path)
+                    msg += "\n(تمت الطباعة تلقائياً)"
+            
             QMessageBox.information(self, "تم", msg)
         else:
             QMessageBox.warning(self, "خطأ", msg)
@@ -310,7 +318,7 @@ class MainWindow(QMainWindow):
         if not sales:
             QMessageBox.warning(self, self.lang.get_text("reports"), "لا يوجد عمليات بيع سابقة لإصدار فاتورة.")
             return
-        path = self.invoice_mgr.create_invoice(sales[-1])
+        path = self.invoice_mgr.generate_pdf_invoice(sales[-1], self.settings)
         if path: QMessageBox.information(self, "تم", f"تم حفظ الفاتورة في:\n{path}")
 
     def show_advanced_reports(self):

@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QScrollArea, QTableWidget, QTableWidgetItem, QHeaderView
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QBrush
 from ui.base_page import BasePage
 from components.stats_card import StatsCard
 from components.style_engine import Colors
@@ -100,11 +101,13 @@ class DashboardPage(BasePage):
             self.recent_table.setItem(row, 2, QTableWidgetItem(s['payment_method']))
             
         # Update Alerts Table
-        low_stock = [p for p in products if p['stock'] <= 5]
+        low_stock = [p for p in products if p['stock'] <= p.get('min_stock', 10)]
         self.alerts_table.setRowCount(0)
         for p in low_stock[:10]:
             row = self.alerts_table.rowCount()
             self.alerts_table.insertRow(row)
             self.alerts_table.setItem(row, 0, QTableWidgetItem(p['name']))
             self.alerts_table.setItem(row, 1, QTableWidgetItem(str(p['stock'])))
-            self.alerts_table.item(row, 1).setForeground(Colors.DANGER if p['stock'] <= 2 else Colors.TEXT_PRIMARY)
+            min_val = p.get('min_stock', 10)
+            color_hex = Colors.DANGER if p['stock'] <= (min_val // 2) else Colors.TEXT_PRIMARY
+            self.alerts_table.item(row, 1).setForeground(QBrush(QColor(color_hex)))

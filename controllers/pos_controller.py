@@ -42,12 +42,12 @@ class POSController(BaseController):
 
     def process_sale(self, method, shift_id, customer_id=None):
         if not self.cart_items:
-            return False, "السلة فارغة"
+            return False, "السلة فارغة", None
         
         total = self.get_cart_total()
         try:
-            self.db.add_sale(self.cart_items, total, method, shift_id, customer_id)
+            sale = self.db.add_sale(self.cart_items, total, method, shift_id, customer_id)
             self.clear_cart()
-            return True, "تمت العملية بنجاح"
+            return True, "تمت العملية بنجاح", sale
         except Exception as e:
-            return False, f"فشل في إتمام البيع: {str(e)}"
+            return False, f"فشل في إتمام البيع: {str(e)}", None

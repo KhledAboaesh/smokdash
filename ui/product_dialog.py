@@ -71,6 +71,10 @@ class ProductDialog(QDialog):
         
         self.stock_input = QSpinBox()
         self.stock_input.setMaximum(100000)
+
+        self.min_stock_input = QSpinBox()
+        self.min_stock_input.setMaximum(100000)
+        self.min_stock_input.setValue(10)
         
         self.barcode_input = QLineEdit()
         self.barcode_input.setPlaceholderText("الباركود العالمي...")
@@ -79,6 +83,7 @@ class ProductDialog(QDialog):
         form.addRow("الماركة:", self.brand_input)
         form.addRow("سعر البيع:", self.price_input)
         form.addRow("الكمية بالمخزن:", self.stock_input)
+        form.addRow("حد التنبيه (الأدنى):", self.min_stock_input)
         form.addRow("كود الباركود:", self.barcode_input)
         
         content_layout.addLayout(form)
@@ -116,6 +121,7 @@ class ProductDialog(QDialog):
             self.brand_input.setText(self.product_data.get('brand', ''))
             self.price_input.setValue(self.product_data.get('price', 0))
             self.stock_input.setValue(self.product_data.get('stock', 0))
+            self.min_stock_input.setValue(self.product_data.get('min_stock', 10))
             self.barcode_input.setText(self.product_data.get('barcode', ''))
 
     def delete_product(self):
@@ -129,6 +135,7 @@ class ProductDialog(QDialog):
             "brand": self.brand_input.text(),
             "price": self.price_input.value(),
             "stock": self.stock_input.value(),
+            "min_stock": self.min_stock_input.value(),
             "barcode": self.barcode_input.text()
         }
         if self.is_edit_mode and self.product_data:
