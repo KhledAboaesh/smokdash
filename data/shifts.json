@@ -3,9 +3,14 @@
         "id": "SHFT20251230174940",
         "username": "admin",
         "start_time": "2025-12-30T17:49:40.972418",
-        "end_time": null,
+        "end_time": "2026-01-01T05:26:57.826785",
         "start_cash": 10.0,
-        "end_cash": 0,
-        "status": "open"
+        "end_cash": 10.0,
+        "status": "closed",
+        "notes": "",
+        "total_sales": 40.0,
+        "cash_sales": 0,
+        "card_sales": 10.0,
+        "debt_sales": 12.5
     }
 ]

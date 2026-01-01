@@ -46,6 +46,7 @@ from ui.customer_dialog import CustomerDialog
 from ui.user_dialog import UserDialog
 from ui.splash_screen import SplashScreen
 from ui.login_dialog import LoginDialog
+from ui.shift_dialogs import OpenShiftDialog, CloseShiftDialog
 
 class MainWindow(QMainWindow):
     def __init__(self, user_data, db):
@@ -86,6 +87,9 @@ class MainWindow(QMainWindow):
         
         # Initial Data load
         self.refresh_data()
+        
+        # 7. Shift Enforcement
+        QTimer.singleShot(100, self.force_shift_check)
         
         # Start
         self.nav_manager.switch_page(start_idx)
@@ -128,6 +132,26 @@ class MainWindow(QMainWindow):
         self.logo_text.setObjectName("logoLabel")
         self.logo_text.setAlignment(Qt.AlignCenter)
         self.sidebar_layout.addWidget(self.logo_text)
+        self.sidebar_layout.addSpacing(10)
+        
+        # Shift Status Label in Sidebar
+        self.shift_status_widget = QFrame()
+        self.shift_status_widget.setObjectName("statsCard")
+        self.shift_status_widget.setFixedHeight(80)
+        ss_layout = QVBoxLayout(self.shift_status_widget)
+        
+        self.shift_lbl = QLabel("الوردية: مغلقة 🔴")
+        self.shift_lbl.setStyleSheet("font-weight: bold; color: #FDFCF0;")
+        self.shift_lbl.setAlignment(Qt.AlignCenter)
+        ss_layout.addWidget(self.shift_lbl)
+        
+        self.shift_btn = QPushButton("فتح الوردية")
+        self.shift_btn.setObjectName("posButton")
+        self.shift_btn.setFixedHeight(30)
+        self.shift_btn.clicked.connect(self.toggle_shift)
+        ss_layout.addWidget(self.shift_btn)
+        
+        self.sidebar_layout.addWidget(self.shift_status_widget)
         self.sidebar_layout.addSpacing(10)
         
         self.main_layout.addWidget(self.sidebar)
@@ -258,7 +282,12 @@ class MainWindow(QMainWindow):
             customer = next(c for c in customers if c['name'] == name)
             customer_id = customer['id']
 
-        shift_id = self.active_shift['id'] if self.active_shift else "manual"
+        if not self.active_shift:
+            QMessageBox.warning(self, "تنبيه", "يجب فتح وردية أولاً للقيام بالمبيعات!")
+            self.toggle_shift()
+            return
+            
+        shift_id = self.active_shift['id']
         success, msg, sale_data = self.pos_ctrl.process_sale(method, shift_id, customer_id)
         
         if success:
@@ -312,6 +341,44 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'users_page'): self.users_page.refresh()
         if hasattr(self, 'reports_page'): self.reports_page.refresh()
         if hasattr(self, 'invoices_page'): self.invoices_page.refresh()
+        self.update_shift_ui()
+
+    def update_shift_ui(self):
+        self.active_shift = self.db.get_active_shift(self.user_data['username'])
+        if self.active_shift:
+            self.shift_lbl.setText("الوردية: نشطة 🟢")
+            self.shift_btn.setText("إغلاق الوردية")
+            self.shift_btn.setObjectName("dangerButton")
+        else:
+            self.shift_lbl.setText("الوردية: مغلقة 🔴")
+            self.shift_btn.setText("فتح الوردية")
+            self.shift_btn.setObjectName("posButton")
+        self.shift_btn.style().unpolish(self.shift_btn)
+        self.shift_btn.style().polish(self.shift_btn)
+
+    def force_shift_check(self):
+        if not self.active_shift:
+            self.toggle_shift()
+
+    def toggle_shift(self):
+        if self.active_shift:
+            # Close Shift
+            report = self.db.get_shift_report(self.active_shift['id'])
+            dialog = CloseShiftDialog(self.active_shift, report, self)
+            if dialog.exec():
+                cash, notes = dialog.get_data()
+                self.db.close_shift(self.active_shift['id'], cash, notes)
+                self.active_shift = None
+                QMessageBox.information(self, "تم", "تم إغلاق الوردية بنجاح.")
+                self.refresh_data()
+        else:
+            # Open Shift
+            dialog = OpenShiftDialog(self)
+            if dialog.exec():
+                cash = dialog.get_start_cash()
+                self.active_shift = self.db.open_shift(self.user_data['username'], cash)
+                QMessageBox.information(self, "تم", "تم فتح وردية جديدة.")
+                self.refresh_data()
 
     # --- User Permissions Logic ---
     def add_user_dialog(self):

@@ -209,8 +209,9 @@ QLineEdit {
     background-color: #062C21;
     border: 1px solid #D4AF37;
     color: #FDFCF0;
-    padding: 8px;
+    padding: 10px;
     border-radius: 0px;
+    min-height: 45px;
 }
 
 /* UNIVERSAL BUTTON FORCING */
@@ -225,7 +226,8 @@ QPushButton#actionButton {
     padding: 10px 20px;
     font-weight: bold;
     border-radius: 0px;
-    min-height: 20px;
+    min-height: 50px; /* INCREASED FOR TOUCH */
+    font-size: 16px;
 }
 
 QPushButton:hover, 
@@ -304,4 +306,31 @@ QCheckBox::indicator {
 
 QCheckBox::indicator:checked {
     background-color: #D4AF37;
+}
+
+/* Numpad Specific Styles */
+QPushButton#numpadKey {
+    background-color: #0A3B2C;
+    color: #FDFCF0;
+    border: 1px solid #D4AF37;
+    font-size: 20px;
+    font-weight: bold;
+    min-height: 60px;
+}
+
+QPushButton#numpadKey:pressed {
+    background-color: #D4AF37 !important;
+    color: #000000 !important;
+}
+
+QPushButton#numpadAction {
+    background-color: #D4AF37 !important;
+    color: #000000 !important;
+    font-size: 18px;
+    min-height: 60px;
+    border-radius: 0px;
+}
+
+QPushButton#numpadAction:hover {
+    background-color: #F1E5AC !important;
 }

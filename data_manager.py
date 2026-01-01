@@ -269,16 +269,37 @@ class DataManager:
         self.cache.set("shifts", shifts)
         return new_shift
 
-    def close_shift(self, shift_id, end_cash):
+    def close_shift(self, shift_id, end_cash, notes=""):
         shifts = self.get_shifts(use_cache=False)
         for s in shifts:
             if s['id'] == shift_id:
                 s['end_time'] = datetime.now().isoformat()
                 s['end_cash'] = end_cash
+                s['notes'] = notes
                 s['status'] = 'closed'
+                
+                # Calculate final stats for this shift
+                report = self.get_shift_report(shift_id)
+                s['total_sales'] = report['total']
+                s['cash_sales'] = report['cash']
+                s['card_sales'] = report['card']
+                s['debt_sales'] = report['debt']
                 break
         self._save_json(self.shifts_file, shifts)
         self.cache.set("shifts", shifts)
+
+    def get_shift_report(self, shift_id):
+        sales = self.get_sales()
+        shift_sales = [s for s in sales if s.get('shift_id') == shift_id]
+        
+        totals = {
+            "count": len(shift_sales),
+            "total": sum(s['total_amount'] for s in shift_sales),
+            "cash": sum(s['total_amount'] for s in shift_sales if s['payment_method'] == 'cash' or s['payment_method'] == 'نقدي'),
+            "card": sum(s['total_amount'] for s in shift_sales if s['payment_method'] == 'card' or s['payment_method'] == 'بطاقة'),
+            "debt": sum(s['total_amount'] for s in shift_sales if s['payment_method'] == 'debt' or s['payment_method'] == 'دين')
+        }
+        return totals
 
     # Customers
     def get_customers(self, use_cache=True):

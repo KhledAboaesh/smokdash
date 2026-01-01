@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QTableWidget, QTableWidgetItem, QHeaderView
 import qtawesome as qta
 from PySide6.QtCore import Qt
+from datetime import datetime
 from ui.base_page import BasePage
 from components.style_engine import Colors
 
@@ -83,6 +84,21 @@ class ReportsPage(BasePage):
         self.top_summary_table.setEditTriggers(QTableWidget.NoEditTriggers)
         
         self.add_widget(self.top_summary_table)
+
+        # Shift History Section
+        shift_header = QLabel("سجل الورديات والتقارير المالية")
+        shift_header.setObjectName("sectionHeader")
+        self.add_widget(shift_header)
+        
+        self.shift_history_table = QTableWidget(0, 5)
+        self.shift_history_table.setHorizontalHeaderLabels([
+            "الموظف", "البدء", "الإغلاق", "النقد الافتتاحي", "المبيعات"
+        ])
+        self.shift_history_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.shift_history_table.setFixedHeight(200)
+        self.shift_history_table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.add_widget(self.shift_history_table)
+        
         self.layout.addStretch()
 
     def refresh(self):
@@ -112,3 +128,21 @@ class ReportsPage(BasePage):
             self.top_summary_table.insertRow(row)
             self.top_summary_table.setItem(row, 0, QTableWidgetItem(p['name']))
             self.top_summary_table.setItem(row, 1, QTableWidgetItem(f"{p['rev']:.2f}"))
+
+        # Populate Shift History
+        shifts = self.main_window.db.get_shifts()
+        self.shift_history_table.setRowCount(0)
+        for s in reversed(shifts):
+            if s['status'] == 'closed':
+                row = self.shift_history_table.rowCount()
+                self.shift_history_table.insertRow(row)
+                self.shift_history_table.setItem(row, 0, QTableWidgetItem(s['username']))
+                
+                # Format times
+                start = datetime.fromisoformat(s['start_time']).strftime("%Y-%m-%d %H:%M")
+                end = datetime.fromisoformat(s['end_time']).strftime("%Y-%m-%d %H:%M") if s['end_time'] else "-"
+                
+                self.shift_history_table.setItem(row, 1, QTableWidgetItem(start))
+                self.shift_history_table.setItem(row, 2, QTableWidgetItem(end))
+                self.shift_history_table.setItem(row, 3, QTableWidgetItem(f"{s.get('start_cash', 0):.2f}"))
+                self.shift_history_table.setItem(row, 4, QTableWidgetItem(f"{s.get('total_sales', 0):.2f}"))
