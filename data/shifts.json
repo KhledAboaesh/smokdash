@@ -12,5 +12,14 @@
         "cash_sales": 0,
         "card_sales": 10.0,
         "debt_sales": 12.5
+    },
+    {
+        "id": "SHFT20260101055901",
+        "username": "admin",
+        "start_time": "2026-01-01T05:59:01.486413",
+        "end_time": null,
+        "start_cash": 10.0,
+        "end_cash": 0,
+        "status": "open"
     }
 ]

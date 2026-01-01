@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QTableWidget, QTableWidgetItem, QHeaderView, QPushButton
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QTableWidget, QTableWidgetItem, QHeaderView, QPushButton, QSizePolicy, QGridLayout
 from PySide6.QtCore import Qt, QSize
 import qtawesome as qta
 from ui.base_page import BasePage
@@ -14,73 +14,72 @@ class POSPage(BasePage):
 
     def setup_ui(self):
         main_h_layout = QHBoxLayout()
-        main_h_layout.setSpacing(20)
+        main_h_layout.setSpacing(15)
         
-        # --- LEFT: Product Selection ---
-        left_panel = QFrame()
-        left_layout = QVBoxLayout(left_panel)
-        left_layout.setContentsMargins(0, 0, 0, 0)
+        # --- COLUMN 1: Product Selection (Largest) ---
+        col1 = QFrame()
+        col1_layout = QVBoxLayout(col1)
+        col1_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Search Bar
         search_box = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("بحث عن صنف (اسم أو كود)...")
+        self.search_input.setPlaceholderText("🔎 بحث عن صنف...")
         self.search_input.textChanged.connect(self.main_window.search_pos_products)
-        
-        icon_label = QLabel()
-        icon_label.setPixmap(qta.icon("fa5s.search", color=Colors.TEXT_SECONDARY).pixmap(16, 16))
-        search_box.addWidget(icon_label)
         search_box.addWidget(self.search_input)
-        left_layout.addLayout(search_box)
+        col1_layout.addLayout(search_box)
         
-        # Product Table
         self.products_table = QTableWidget(0, 3)
         self.products_table.setHorizontalHeaderLabels(["الصنف", "السعر", "المخزون"])
         self.products_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.products_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.products_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.products_table.itemDoubleClicked.connect(self.main_window.add_to_cart)
-        left_layout.addWidget(self.products_table)
+        col1_layout.addWidget(self.products_table)
         
-        # --- TOUCH NUMPAD ---
-        self.numpad = NumpadWidget()
-        self.numpad.digit_pressed.connect(self._on_numpad_digit)
-        self.numpad.action_pressed.connect(self._on_numpad_action)
-        left_layout.addWidget(self.numpad)
+        main_h_layout.addWidget(col1, 3)
         
-        main_h_layout.addWidget(left_panel, 2)
+        # --- COLUMN 2: Cart (Middle) ---
+        col2 = QFrame()
+        col2.setObjectName("statsCard")
+        col2_layout = QVBoxLayout(col2)
         
-        # --- RIGHT: Cart & Checkout ---
-        right_panel = QFrame()
-        right_panel.setObjectName("statsCard") # Reusing card style for cart container
-        right_layout = QVBoxLayout(right_panel)
-        
-        right_layout.addWidget(QLabel("سلة المشتريات"))
+        cart_header = QLabel("🛒 سلة المشتريات")
+        cart_header.setObjectName("sectionHeader")
+        col2_layout.addWidget(cart_header)
         
         self.cart_table = QTableWidget(0, 3)
         self.cart_table.setHorizontalHeaderLabels(["الصنف", "الكمية", "الإجمالي"])
         self.cart_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        right_layout.addWidget(self.cart_table)
+        col2_layout.addWidget(self.cart_table)
         
-        # Totals Area
         self.total_label = QLabel("الإجمالي: 0.00 LYD")
         self.total_label.setObjectName("totalLabel")
-        right_layout.addWidget(self.total_label)
+        self.total_label.setAlignment(Qt.AlignCenter)
+        col2_layout.addWidget(self.total_label)
         
-        # Actions
-        btn_box = QHBoxLayout()
+        main_h_layout.addWidget(col2, 2)
+        
+        # --- COLUMN 3: Payment & Numpad (Compact Right) ---
+        col3 = QFrame()
+        col3.setObjectName("statsCard")
+        col3.setMaximumWidth(400) # Prepend extreme growth
+        col3_layout = QVBoxLayout(col3)
+        
+        pay_header = QLabel("💳 إتمام العملية")
+        pay_header.setObjectName("sectionHeader")
+        col3_layout.addWidget(pay_header)
+        
+        # Payment Buttons (Grid)
+        pay_grid = QGridLayout()
         self.pay_btn = QPushButton(self.main_window.lang.get_text("pos_cash"))
-        self.pay_btn.setIcon(qta.icon("fa5s.money-bill-wave", color="#062C21"))
         self.pay_btn.setObjectName("posButton")
         self.pay_btn.clicked.connect(lambda: self.main_window.process_sale("نقداً"))
         
         self.card_btn = QPushButton(self.main_window.lang.get_text("pos_card"))
-        self.card_btn.setIcon(qta.icon("fa5s.credit-card", color="#062C21"))
         self.card_btn.setObjectName("posButton")
         self.card_btn.clicked.connect(lambda: self.main_window.process_sale("بطاقة"))
         
         self.debt_btn = QPushButton(self.main_window.lang.get_text("pos_debt"))
-        self.debt_btn.setIcon(qta.icon("fa5s.hand-holding-usd", color="#062C21"))
         self.debt_btn.setObjectName("inventoryButton")
         self.debt_btn.clicked.connect(lambda: self.main_window.process_sale("دين"))
         
@@ -88,13 +87,22 @@ class POSPage(BasePage):
         self.clear_btn.setObjectName("dangerButton")
         self.clear_btn.clicked.connect(self.main_window.clear_cart)
         
-        btn_box.addWidget(self.pay_btn)
-        btn_box.addWidget(self.card_btn)
-        btn_box.addWidget(self.debt_btn)
-        btn_box.addWidget(self.clear_btn)
-        right_layout.addLayout(btn_box)
+        pay_grid.addWidget(self.pay_btn, 0, 0)
+        pay_grid.addWidget(self.card_btn, 0, 1)
+        pay_grid.addWidget(self.debt_btn, 1, 0)
+        pay_grid.addWidget(self.clear_btn, 1, 1)
+        col3_layout.addLayout(pay_grid)
         
-        main_h_layout.addWidget(right_panel, 1)
+        col3_layout.addSpacing(10)
+        
+        # Compact Numpad
+        self.numpad = NumpadWidget()
+        self.numpad.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.numpad.digit_pressed.connect(self._on_numpad_digit)
+        self.numpad.action_pressed.connect(self._on_numpad_action)
+        col3_layout.addWidget(self.numpad)
+        
+        main_h_layout.addWidget(col3, 2)
         
         self.add_layout(main_h_layout)
 

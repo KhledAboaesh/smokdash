@@ -13,6 +13,7 @@ QMainWindow {
     background-color: #0A3B2C;
     border-right: 2px solid #D4AF37;
     min-width: 250px;
+    max-width: 350px;
 }
 
 #logoLabel {
@@ -81,11 +82,11 @@ QScrollBar::handle:vertical {
     min-height: 20px;
 }
 
-/* Base Widget Container (Cigarette Box Style) */
+/* Base Widget Container (Modern Lux Style) */
 QFrame#statsCard, QFrame#loginCard, QFrame#dialogContainer {
     background-color: #0A3B2C;
-    border: 2px solid #D4AF37;
-    border-radius: 0px;
+    border: 1px solid #D4AF37;
+    border-radius: 8px;
 }
 
 QFrame#headerFrame {
@@ -207,27 +208,34 @@ QHeaderView::section {
 
 QLineEdit {
     background-color: #062C21;
-    border: 1px solid #D4AF37;
+    border: 1px solid #2D4F44;
     color: #FDFCF0;
-    padding: 10px;
-    border-radius: 0px;
+    padding: 12px;
+    border-radius: 4px;
     min-height: 45px;
+    max-height: 50px;
 }
 
-/* UNIVERSAL BUTTON FORCING */
+QLineEdit:focus {
+    border: 1px solid #D4AF37;
+    background-color: #0A3B2C;
+}
+
+/* MODERN LUX BUTTONS - REDESIGNED */
 QPushButton, 
 QPushButton#posButton, 
 QPushButton#inventoryButton, 
 QPushButton#loginBtn, 
 QPushButton#actionButton {
-    background-color: #D4AF37 !important;
-    color: #000000 !important;
-    border: none !important;
+    background-color: #062C21 !important;
+    color: #FDFCF0 !important;
+    border: 1px solid #D4AF37 !important;
     padding: 10px 20px;
-    font-weight: bold;
-    border-radius: 0px;
-    min-height: 50px; /* INCREASED FOR TOUCH */
-    font-size: 16px;
+    font-weight: 600;
+    border-radius: 4px;
+    min-height: 48px;
+    max-height: 55px;
+    font-size: 15px;
 }
 
 QPushButton:hover, 
@@ -235,8 +243,9 @@ QPushButton#posButton:hover,
 QPushButton#inventoryButton:hover, 
 QPushButton#loginBtn:hover, 
 QPushButton#actionButton:hover {
-    background-color: #F1E5AC !important;
-    color: #000000 !important;
+    background-color: #D4AF37 !important;
+    color: #062C21 !important;
+    border: 1px solid #D4AF37 !important;
 }
 
 QPushButton:pressed, 
@@ -308,29 +317,38 @@ QCheckBox::indicator:checked {
     background-color: #D4AF37;
 }
 
-/* Numpad Specific Styles */
+/* Elite Numpad Styles - Compact & Symmetrical */
 QPushButton#numpadKey {
-    background-color: #0A3B2C;
+    background-color: #062C21;
     color: #FDFCF0;
+    border: 1px solid #2D4F44;
+    font-size: 18px;
+    font-weight: 500;
+    min-height: 50px;
+    max-height: 60px;
+    border-radius: 4px;
+}
+
+QPushButton#numpadKey:hover {
     border: 1px solid #D4AF37;
-    font-size: 20px;
-    font-weight: bold;
-    min-height: 60px;
 }
 
 QPushButton#numpadKey:pressed {
     background-color: #D4AF37 !important;
-    color: #000000 !important;
+    color: #062C21 !important;
 }
 
 QPushButton#numpadAction {
-    background-color: #D4AF37 !important;
-    color: #000000 !important;
-    font-size: 18px;
-    min-height: 60px;
-    border-radius: 0px;
+    background-color: #0A3B2C !important;
+    color: #D4AF37 !important;
+    border: 1px solid #D4AF37 !important;
+    font-size: 15px;
+    min-height: 50px;
+    max-height: 60px;
+    border-radius: 4px;
 }
 
 QPushButton#numpadAction:hover {
-    background-color: #F1E5AC !important;
+    background-color: #D4AF37 !important;
+    color: #062C21 !important;
 }

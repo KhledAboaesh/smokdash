@@ -123,9 +123,9 @@ class MainWindow(QMainWindow):
         # Brand Logo at Top
         self.logo_img = QLabel()
         logo_pix = QPixmap(resource_path("logo.png"))
-        self.logo_img.setPixmap(logo_pix.scaled(180, 180, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.logo_img.setPixmap(logo_pix.scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.logo_img.setAlignment(Qt.AlignCenter)
-        self.logo_img.setContentsMargins(0, 20, 0, 10)
+        self.logo_img.setContentsMargins(0, 15, 0, 5)
         self.sidebar_layout.addWidget(self.logo_img)
         
         self.logo_text = QLabel("SMOKEDASH V3.0")

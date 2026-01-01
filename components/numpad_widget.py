@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QGridLayout, QPushButton, QVBoxLayout, QSizePolicy
 from PySide6.QtCore import Signal, Qt
 
 class NumpadWidget(QWidget):
@@ -23,16 +23,16 @@ class NumpadWidget(QWidget):
         
         for b in buttons:
             btn = QPushButton(b[0])
+            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            btn.setObjectName("numpadKey" if b[0] in '0123456789.' else "numpadAction")
             if len(b) == 5:
                 layout.addWidget(btn, b[1], b[2], b[3], b[4])
             else:
                 layout.addWidget(btn, b[1], b[2])
             
             if b[0] in '0123456789.':
-                btn.setObjectName("numpadKey")
                 btn.clicked.connect(lambda ch=b[0]: self.digit_pressed.emit(ch))
             else:
-                btn.setObjectName("numpadAction")
                 if b[0] == '⌫':
                     btn.clicked.connect(lambda: self.action_pressed.emit('backspace'))
                 elif b[0] == 'مسح':
