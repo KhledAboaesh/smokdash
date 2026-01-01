@@ -61,7 +61,6 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self.lang.get_text("app_title"))
         self.setWindowIcon(QPixmap(resource_path("logo.png")))
         self.resize(1200, 800)
-        self.set_app_styling()
         
         # 3. Core UI Shell
         self.active_shift = self.db.get_active_shift(self.user_data['username'])
@@ -102,14 +101,6 @@ class MainWindow(QMainWindow):
         saved_lang = self.settings.get('language', 'ar')
         self.lang.set_language(saved_lang)
 
-    def set_app_styling(self):
-        try:
-            style_path = resource_path("style.qss")
-            if os.path.exists(style_path):
-                with open(style_path, "r", encoding='utf-8') as f:
-                    self.setStyleSheet(f.read())
-        except Exception as e:
-            print(f"Error loading stylesheet: {e}")
 
     def setup_ui_shell(self):
         self.central_widget = QWidget()
@@ -475,6 +466,16 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    
+    # Apply Global Styles to the App
+    try:
+        style_path = resource_path("style.qss")
+        if os.path.exists(style_path):
+            with open(style_path, "r", encoding='utf-8') as f:
+                app.setStyleSheet(f.read())
+    except Exception as e:
+        print(f"Error loading style: {e}")
+
     db = DataManager()
     login = LoginDialog(db)
     if login.exec():

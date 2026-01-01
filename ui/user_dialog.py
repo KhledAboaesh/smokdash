@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QLineEdit, QHBoxLayout, QPushButton, QMessageBox, QLabel, QFrame, QComboBox, QCheckBox, QGridLayout
+import qtawesome as qta
 from PySide6.QtCore import Qt
 from components.style_engine import Colors, StyleEngine
 
@@ -22,32 +23,14 @@ class UserDialog(QDialog):
     def setup_ui(self):
         main_layout = QVBoxLayout(self)
         self.container = QFrame()
-        self.container.setObjectName("statsCard")
-        self.container.setStyleSheet(f"""
-            QFrame#statsCard {{
-                background-color: {Colors.SECONDARY_BG};
-                border: 2px solid {Colors.ACCENT};
-                border-radius: 0px;
-            }}
-            QLabel {{ color: {Colors.TEXT_PRIMARY}; font-weight: 600; }}
-            QLineEdit, QComboBox {{
-                background-color: {Colors.BACKGROUND};
-                border: 1px solid {Colors.ACCENT};
-                border-radius: 0px;
-                padding: 10px;
-                color: {Colors.TEXT_PRIMARY};
-            }}
-            QLineEdit:focus, QComboBox:focus {{
-                border: 2px solid {Colors.TEXT_PRIMARY};
-            }}
-        """)
+        self.container.setObjectName("dialogContainer")
         
         main_layout.addWidget(self.container)
         layout = QVBoxLayout(self.container)
         layout.setContentsMargins(30,30,30,30)
         
         header = QLabel(self.windowTitle())
-        header.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {Colors.ACCENT}; margin-bottom: 10px;")
+        header.setObjectName("sectionHeader")
         layout.addWidget(header)
         
         form = QFormLayout()
@@ -70,7 +53,7 @@ class UserDialog(QDialog):
         
         # Permissions Section
         perm_label = QLabel("صلاحيات الوصول:")
-        perm_label.setStyleSheet(f"color: {Colors.ACCENT}; font-weight: bold; margin-top: 10px;")
+        perm_label.setObjectName("sectionHeader")
         layout.addWidget(perm_label)
         
         perm_grid = QGridLayout()
@@ -88,7 +71,6 @@ class UserDialog(QDialog):
         
         for i, (key, label) in enumerate(pages):
             chk = QCheckBox(label)
-            chk.setStyleSheet(f"color: {Colors.TEXT_PRIMARY};")
             perm_grid.addWidget(chk, i // 2, i % 2)
             self.perm_checks[key] = chk
             
@@ -98,13 +80,16 @@ class UserDialog(QDialog):
         self.role_combo.currentTextChanged.connect(self.apply_role_presets)
         
         btns = QHBoxLayout()
-        save_btn = QPushButton("حفظ")
+        save_btn = QPushButton(" حفظ البيانات")
+        save_btn.setIcon(qta.icon("fa5s.save", color="#062C21"))
         save_btn.setObjectName("posButton")
         save_btn.setFixedHeight(40)
         save_btn.clicked.connect(self.accept)
         
-        cancel_btn = QPushButton("إلغاء")
-        cancel_btn.setStyleSheet("background: transparent; color: #8b949e;")
+        cancel_btn = QPushButton(" إلغاء")
+        cancel_btn.setIcon(qta.icon("fa5s.times", color="#C8C4A0"))
+        cancel_btn.setObjectName("secondaryButton")
+        cancel_btn.setFixedHeight(40)
         cancel_btn.clicked.connect(self.reject)
         
         btns.addStretch()

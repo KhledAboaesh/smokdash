@@ -169,5 +169,23 @@
         "payment_method": "نقداً",
         "shift_id": "SHFT20251230174940",
         "customer_id": null
+    },
+    {
+        "id": "20260101030843334729",
+        "invoice_number": "INV-2026-0001",
+        "timestamp": "2026-01-01T03:08:43.334794",
+        "items": [
+            {
+                "product_id": "20251230175116",
+                "name": "مالبورو احمر",
+                "quantity": 1,
+                "price": 2.5,
+                "total": 2.5
+            }
+        ],
+        "total_amount": 2.5,
+        "payment_method": "نقداً",
+        "shift_id": "SHFT20251230174940",
+        "customer_id": null
     }
 ]

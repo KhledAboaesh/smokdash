@@ -57,25 +57,28 @@ class POSPage(BasePage):
         
         # Totals Area
         self.total_label = QLabel("الإجمالي: 0.00 LYD")
-        self.total_label.setStyleSheet(f"font-size: 24px; font-weight: 800; color: {Colors.ACCENT}; margin-top: 10px;")
+        self.total_label.setObjectName("totalLabel")
         right_layout.addWidget(self.total_label)
         
         # Actions
         btn_box = QHBoxLayout()
         self.pay_btn = QPushButton(self.main_window.lang.get_text("pos_cash"))
+        self.pay_btn.setIcon(qta.icon("fa5s.money-bill-wave", color="#062C21"))
         self.pay_btn.setObjectName("posButton")
         self.pay_btn.clicked.connect(lambda: self.main_window.process_sale("نقداً"))
         
         self.card_btn = QPushButton(self.main_window.lang.get_text("pos_card"))
+        self.card_btn.setIcon(qta.icon("fa5s.credit-card", color="#062C21"))
         self.card_btn.setObjectName("posButton")
         self.card_btn.clicked.connect(lambda: self.main_window.process_sale("بطاقة"))
         
         self.debt_btn = QPushButton(self.main_window.lang.get_text("pos_debt"))
+        self.debt_btn.setIcon(qta.icon("fa5s.hand-holding-usd", color="#062C21"))
         self.debt_btn.setObjectName("inventoryButton")
         self.debt_btn.clicked.connect(lambda: self.main_window.process_sale("دين"))
         
         self.clear_btn = QPushButton("إفراغ")
-        self.clear_btn.setStyleSheet(f"background-color: transparent; color: {Colors.DANGER}; border: 1px solid {Colors.DANGER}; padding: 8px;")
+        self.clear_btn.setObjectName("dangerButton")
         self.clear_btn.clicked.connect(self.main_window.clear_cart)
         
         btn_box.addWidget(self.pay_btn)

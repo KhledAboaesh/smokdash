@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QLineEdit, QDoubleSpinBox, QSpinBox, QHBoxLayout, QPushButton, QMessageBox, QLabel, QFrame
+import qtawesome as qta
 from PySide6.QtCore import Qt
 from components.style_engine import Colors, StyleEngine
 
@@ -22,26 +23,8 @@ class ProductDialog(QDialog):
 
     def setup_ui(self):
         # Container with custom border and shadow
-        self.container = QFrame(self)
-        self.container.setObjectName("statsCard")
-        self.container.setStyleSheet(f"""
-            QFrame#statsCard {{
-                background-color: {Colors.SECONDARY_BG};
-                border: 2px solid {Colors.ACCENT};
-                border-radius: 0px;
-            }}
-            QLabel {{ color: {Colors.TEXT_PRIMARY}; font-weight: 600; }}
-            QLineEdit, QDoubleSpinBox, QSpinBox {{
-                background-color: {Colors.BACKGROUND};
-                border: 1px solid {Colors.ACCENT};
-                border-radius: 0px;
-                padding: 8px;
-                color: {Colors.TEXT_PRIMARY};
-            }}
-            QLineEdit:focus, QDoubleSpinBox:focus, QSpinBox:focus {{
-                border: 2px solid {Colors.TEXT_PRIMARY};
-            }}
-        """)
+        self.container = QFrame()
+        self.container.setObjectName("dialogContainer")
         
         main_layout = QVBoxLayout(self)
         main_layout.addWidget(self.container)
@@ -52,7 +35,7 @@ class ProductDialog(QDialog):
         
         # Header
         header_lbl = QLabel(self.windowTitle())
-        header_lbl.setStyleSheet(f"font-size: 20px; font-weight: 800; color: {Colors.ACCENT}; margin-bottom: 10px;")
+        header_lbl.setObjectName("sectionHeader")
         content_layout.addWidget(header_lbl)
         
         # Form
@@ -92,18 +75,23 @@ class ProductDialog(QDialog):
         btns_layout = QHBoxLayout()
         btns_layout.setSpacing(10)
         
-        save_btn = QPushButton("حفظ التغييرات" if self.is_edit_mode else "إضافة")
+        save_btn = QPushButton(" حفظ الصنف")
+        save_btn.setIcon(qta.icon("fa5s.save", color="#062C21"))
         save_btn.setObjectName("posButton")
         save_btn.setFixedHeight(40)
         save_btn.clicked.connect(self.accept)
         
-        cancel_btn = QPushButton("إلغاء")
-        cancel_btn.setStyleSheet(f"background: transparent; color: {Colors.TEXT_SECONDARY}; padding: 8px;")
+        cancel_btn = QPushButton(" إلغاء")
+        cancel_btn.setIcon(qta.icon("fa5s.times", color="#C8C4A0"))
+        cancel_btn.setObjectName("secondaryButton")
+        cancel_btn.setFixedHeight(40)
         cancel_btn.clicked.connect(self.reject)
         
         if self.is_edit_mode:
-            self.delete_btn = QPushButton("حذف")
-            self.delete_btn.setStyleSheet(f"background-color: {Colors.DANGER}; color: {Colors.TEXT_PRIMARY}; border-radius: 0px; padding: 8px; font-weight: bold;")
+            self.delete_btn = QPushButton(" حذف المنتج")
+            self.delete_btn.setIcon(qta.icon("fa5s.trash-alt", color="#FDFCF0"))
+            self.delete_btn.setObjectName("dangerButton")
+            self.delete_btn.setFixedHeight(40)
             self.delete_btn.clicked.connect(self.delete_product)
             btns_layout.addWidget(self.delete_btn)
             

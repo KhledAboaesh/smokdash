@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTableWidget, QHeaderView, QTableWidgetItem
+import qtawesome as qta
 from ui.base_page import BasePage
 from components.style_engine import Colors
 
@@ -13,6 +14,7 @@ class InventoryPage(BasePage):
         # Actions Row
         actions_layout = QHBoxLayout()
         self.add_btn = QPushButton(" + إضافة صنف جديد")
+        self.add_btn.setIcon(qta.icon("fa5s.plus-circle", color="#062C21"))
         self.add_btn.setObjectName("inventoryButton")
         self.add_btn.setFixedWidth(200)
         self.add_btn.clicked.connect(self.main_window.add_product_dialog)

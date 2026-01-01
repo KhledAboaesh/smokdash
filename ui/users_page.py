@@ -58,7 +58,7 @@ class UserPermissionsPage(BasePage):
         drawer_layout.setSpacing(15)
         
         drawer_title = QLabel("تعديل البيانات")
-        drawer_title.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {Colors.ACCENT}; margin-bottom: 10px;")
+        drawer_title.setObjectName("sectionHeader")
         drawer_layout.addWidget(drawer_title)
         
         self.form = QFormLayout()

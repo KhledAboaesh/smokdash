@@ -28,21 +28,12 @@ class SplashScreen(QDialog):
         self.progress_bar = QProgressBar()
         self.progress_bar.setTextVisible(False)
         self.progress_bar.setFixedWidth(300)
-        self.progress_bar.setStyleSheet(f"""
-            QProgressBar {{
-                border: 1px solid {Colors.ACCENT};
-                background: {Colors.BACKGROUND};
-                height: 10px;
-            }}
-            QProgressBar::chunk {{
-                background-color: {Colors.ACCENT};
-            }}
-        """)
+        # Styles moved to style.qss
         
         # رسالة التحميل
         from components.style_engine import Colors
         self.status_label = QLabel("جاري التحميل...")
-        self.status_label.setStyleSheet(f"color: {Colors.TEXT_SECONDARY};")
+        self.status_label.setObjectName("subtitleLabel")
         self.status_label.setAlignment(Qt.AlignCenter)
         
         layout.addWidget(logo_label)

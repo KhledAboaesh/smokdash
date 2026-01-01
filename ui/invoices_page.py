@@ -33,19 +33,7 @@ class InvoicesPage(BasePage):
         top_layout = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("بحث برقم الفاتورة أو اسم العميل...")
-        self.search_input.setStyleSheet(f"""
-            QLineEdit {{
-                background-color: {Colors.BACKGROUND};
-                color: {Colors.TEXT_PRIMARY};
-                border: 1px solid {Colors.ACCENT};
-                border-radius: 0px;
-                padding: 10px;
-                font-size: 14px;
-            }}
-            QLineEdit:focus {{
-                border: 2px solid {Colors.TEXT_PRIMARY};
-            }}
-        """)
+        self.search_input.setObjectName("searchField")
         self.search_input.textChanged.connect(self.filter_invoices)
         
         top_layout.addWidget(self.search_input)
@@ -56,25 +44,7 @@ class InvoicesPage(BasePage):
         table_panel = QFrame()
         table_panel.setObjectName("statsCard")
         # Global Styles for Menu and Table
-        table_panel.setStyleSheet(f"""
-            QFrame#statsCard {{
-                background-color: {Colors.SECONDARY_BG};
-                border: 2px solid {Colors.ACCENT};
-                border-radius: 0px;
-            }}
-            QMenu {{
-                background-color: {Colors.SECONDARY_BG};
-                color: {Colors.TEXT_PRIMARY};
-                border: 1px solid {Colors.ACCENT};
-            }}
-            QMenu::item {{
-                padding: 8px 25px;
-            }}
-            QMenu::item:selected {{
-                background-color: {Colors.ACCENT};
-                color: {Colors.BACKGROUND};
-            }}
-        """)
+        table_panel.setObjectName("statsCard")
         panel_layout = QVBoxLayout(table_panel)
         
         headers = ["رقم الفاتورة", "التاريخ", "العميل", "القيمة", "طريقة الدفع"]
@@ -85,26 +55,8 @@ class InvoicesPage(BasePage):
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setAlternatingRowColors(True)
         self.table.verticalHeader().setVisible(False)
-        self.table.setStyleSheet(f"""
-            QTableWidget {{
-                background-color: {Colors.SECONDARY_BG};
-                gridline-color: {Colors.ACCENT};
-                color: {Colors.TEXT_PRIMARY};
-                border: none;
-                alternate-background-color: #0D4F3D; /* Lighter Emerald for gradient feel */
-            }}
-            QHeaderView::section {{
-                background-color: {Colors.BACKGROUND};
-                color: {Colors.ACCENT};
-                padding: 12px;
-                border: 1px solid {Colors.ACCENT};
-                font-weight: bold;
-            }}
-            QTableWidget::item:selected {{
-                background-color: {Colors.ACCENT};
-                color: {Colors.BACKGROUND};
-            }}
-        """)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().setVisible(False)
         
         # Context Menu
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)

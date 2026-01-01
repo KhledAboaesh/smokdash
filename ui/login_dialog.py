@@ -23,42 +23,6 @@ class LoginDialog(QDialog):
         # Main Premium Card
         self.card = QFrame()
         self.card.setObjectName("loginCard")
-        self.card.setStyleSheet(f"""
-            QFrame#loginCard {{
-                background-color: {Colors.SECONDARY_BG};
-                border: 2px solid {Colors.ACCENT};
-                border-radius: 10px;
-            }}
-            QLabel#titleLabel {{
-                font-size: 32px;
-                font-weight: 900;
-                color: {Colors.ACCENT};
-                letter-spacing: 0px;
-            }}
-            QLineEdit {{
-                background-color: {Colors.BACKGROUND};
-                border: 1px solid {Colors.ACCENT};
-                border-radius: 0px;
-                padding: 12px 15px;
-                color: {Colors.TEXT_PRIMARY};
-                font-size: 16px;
-            }}
-            QLineEdit:focus {{
-                border: 2px solid {Colors.TEXT_PRIMARY};
-            }}
-            QPushButton#loginBtn {{
-                background-color: {Colors.ACCENT};
-                color: {Colors.BACKGROUND};
-                border-radius: 0px;
-                font-size: 20px;
-                font-weight: 800;
-                letter-spacing: 1px;
-            }}
-            QPushButton#loginBtn:hover {{
-                background-color: {Colors.TEXT_PRIMARY};
-                color: {Colors.BACKGROUND};
-            }}
-        """)
         
         card_layout = QVBoxLayout(self.card)
         card_layout.setContentsMargins(40, 40, 40, 40)
@@ -96,7 +60,7 @@ class LoginDialog(QDialog):
         self.login_btn.clicked.connect(self.check_login)
         
         form_lbl = QLabel("بيانات الدخول الأمنة")
-        form_lbl.setStyleSheet(f"color: {Colors.ACCENT}; font-size: 13px; font-weight: bold; margin-bottom: 0px; letter-spacing: 1px;")
+        form_lbl.setObjectName("sectionHeader")
         card_layout.addWidget(form_lbl)
         card_layout.addWidget(self.username_input)
         card_layout.addSpacing(5)
@@ -107,7 +71,8 @@ class LoginDialog(QDialog):
         # Footer
         footer_layout = QHBoxLayout()
         close_btn = QPushButton("إغلاق النظام")
-        close_btn.setStyleSheet("background: transparent; color: #f85149; font-weight: bold; border: none;")
+        close_btn.setObjectName("dangerButton")
+        close_btn.setFixedHeight(40)
         close_btn.clicked.connect(self.reject)
         
         footer_layout.addStretch()

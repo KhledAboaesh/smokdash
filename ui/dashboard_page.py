@@ -38,7 +38,7 @@ class DashboardPage(BasePage):
         rl.setContentsMargins(20, 20, 20, 20)
         
         rh = QLabel(self.main_window.lang.get_text("recent_sales"))
-        rh.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT}; margin-bottom: 15px;")
+        rh.setObjectName("sectionHeader")
         rl.addWidget(rh)
         
         self.recent_table = QTableWidget(0, 3)
@@ -59,7 +59,7 @@ class DashboardPage(BasePage):
         al.setContentsMargins(20, 20, 20, 20)
         
         ah = QLabel(self.main_window.lang.get_text("stock_alerts"))
-        ah.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.DANGER}; margin-bottom: 15px;")
+        ah.setObjectName("sectionHeader")
         al.addWidget(ah)
         
         self.alerts_table = QTableWidget(0, 2)

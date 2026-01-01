@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTableWidget, QHeaderView, QTableWidgetItem
+import qtawesome as qta
 from ui.base_page import BasePage
 from components.style_engine import Colors
 
@@ -14,13 +15,15 @@ class CustomersPage(BasePage):
         actions_layout = QHBoxLayout()
         actions_layout.setSpacing(10)
         
-        self.add_btn = QPushButton(" + إضافة عميل")
+        self.add_btn = QPushButton(" إضافة عميل جديد")
+        self.add_btn.setIcon(qta.icon("fa5s.user-plus", color="#062C21"))
         self.add_btn.setObjectName("inventoryButton")
         self.add_btn.setFixedWidth(180)
         self.add_btn.clicked.connect(self.main_window.add_customer_dialog)
         
-        self.debt_btn = QPushButton("💸 تحصيل دين")
-        self.debt_btn.setObjectName("posButton") # Using existing QSS for green style
+        self.debt_btn = QPushButton(" تحصيل دين")
+        self.debt_btn.setIcon(qta.icon("fa5s.money-bill-wave", color="#062C21"))
+        self.debt_btn.setObjectName("posButton") 
         self.debt_btn.setFixedWidth(180)
         self.debt_btn.clicked.connect(self.main_window.collect_debt_dialog)
         

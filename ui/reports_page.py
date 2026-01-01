@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QTableWidget, QTableWidgetItem, QHeaderView
+import qtawesome as qta
 from PySide6.QtCore import Qt
 from ui.base_page import BasePage
 from components.style_engine import Colors
@@ -21,7 +22,7 @@ class ReportsPage(BasePage):
         self.total_debt_lbl = QLabel(f"{self.main_window.lang.get_text('total_debt')}: 0.00 LYD")
         
         for lbl in [self.total_revenue_lbl, self.total_debt_lbl]:
-            lbl.setStyleSheet(f"font-size: 20px; font-weight: 800; color: {Colors.ACCENT};")
+            lbl.setObjectName("summaryLabel")
             sl.addWidget(lbl)
             sl.addStretch()
             
@@ -38,9 +39,10 @@ class ReportsPage(BasePage):
         invoice_layout.setContentsMargins(25, 25, 25, 25)
         
         invoice_header = QLabel(self.main_window.lang.get_text("reports") + " - " + self.main_window.lang.get_text("pos"))
-        invoice_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT};")
+        invoice_header.setObjectName("sectionHeader")
         
-        self.gen_invoice_btn = QPushButton("إصدار فاتورة لآخر عملية بيع (PDF)")
+        self.gen_invoice_btn = QPushButton(" إصدار فاتورة (PDF)")
+        self.gen_invoice_btn.setIcon(qta.icon("fa5s.file-pdf", color="#062C21"))
         self.gen_invoice_btn.setObjectName("posButton")
         self.gen_invoice_btn.setFixedHeight(45)
         self.gen_invoice_btn.clicked.connect(self.main_window.generate_last_invoice_pdf)
@@ -56,9 +58,10 @@ class ReportsPage(BasePage):
         adv_reports_layout.setContentsMargins(25, 25, 25, 25)
         
         adv_header = QLabel(self.main_window.lang.get_text("financial_summary"))
-        adv_header.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {Colors.ACCENT};")
+        adv_header.setObjectName("sectionHeader")
         
-        self.show_adv_btn = QPushButton("عرض التقارير والرسوم البيانية المحسنة")
+        self.show_adv_btn = QPushButton(" عرض التقارير والتحليلات")
+        self.show_adv_btn.setIcon(qta.icon("fa5s.chart-line", color="#062C21"))
         self.show_adv_btn.setObjectName("inventoryButton")
         self.show_adv_btn.setFixedHeight(45)
         self.show_adv_btn.clicked.connect(self.main_window.show_advanced_reports)

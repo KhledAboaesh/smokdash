@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, QComboBox, QCheckBox, QLineEdit, QFileDialog
+import qtawesome as qta
 from PySide6.QtCore import Qt
 from ui.base_page import BasePage
 from components.style_engine import Colors
@@ -19,7 +20,7 @@ class SettingsPage(BasePage):
         branding_layout.setSpacing(15)
         
         branding_header = QLabel("إعدادات الهوية (اسم المحل والشعار)")
-        branding_header.setStyleSheet(f"font-size: 20px; font-weight: 800; color: {Colors.ACCENT}; border-bottom: 1px solid {Colors.ACCENT}; padding-bottom: 5px; margin-bottom: 0px;")
+        branding_header.setObjectName("sectionHeader")
         
         # Shop Name
         self.shop_name_input = QLineEdit()
@@ -30,18 +31,17 @@ class SettingsPage(BasePage):
         # Logo Select
         logo_layout = QHBoxLayout()
         self.logo_path_lbl = QLabel(self.main_window.settings.get('logo_path', 'لا يوجد شعار محدد'))
-        self.logo_path_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY}; font-size: 12px;")
+        self.logo_path_lbl.setObjectName("smallLabel")
         self.logo_path_lbl.setWordWrap(True)
         
-        logo_btn = QPushButton("اختر الشعار")
-        logo_btn.setFixedSize(120, 35)
-        logo_btn.clicked.connect(self.select_logo)
-        
+        logo_btn = QPushButton(" اختر الشعار")
+        logo_btn.setIcon(qta.icon("fa5s.image", color="#062C21"))
+        logo_btn.setObjectName("actionButton")
+        logo_btn.setFixedSize(140, 35)
         logo_layout.addWidget(logo_btn)
         logo_layout.addWidget(self.logo_path_lbl)
         
         self.show_logo_chk = QCheckBox("عرض الشعار في الفاتورة المطبوعة")
-        self.show_logo_chk.setStyleSheet(f"color: {Colors.TEXT_PRIMARY}; font-weight: bold;")
         self.show_logo_chk.setChecked(self.main_window.settings.get('show_logo', True))
         self.show_logo_chk.toggled.connect(self.save_branding)
         
@@ -62,7 +62,7 @@ class SettingsPage(BasePage):
         lang_layout.setSpacing(15)
         
         lang_header = QLabel(self.main_window.lang.get_text("language"))
-        lang_header.setStyleSheet(f"font-size: 20px; font-weight: 800; color: {Colors.ACCENT}; border-bottom: 1px solid {Colors.ACCENT}; padding-bottom: 5px; margin-bottom:0px;")
+        lang_header.setObjectName("sectionHeader")
         
         self.lang_combo = QComboBox()
         self.lang_combo.addItem("العربية", "ar")
@@ -87,10 +87,9 @@ class SettingsPage(BasePage):
         print_layout.setSpacing(15)
         
         print_header = QLabel("إعدادات الطابعة والتشغيل")
-        print_header.setStyleSheet(f"font-size: 20px; font-weight: 800; color: {Colors.ACCENT}; border-bottom: 1px solid {Colors.ACCENT}; padding-bottom: 5px; margin-bottom: 0px;")
+        print_header.setObjectName("sectionHeader")
         
         self.auto_print_chk = QCheckBox("تفعيل الطباعة التلقائية (مباشرة بعد عملية البيع)")
-        self.auto_print_chk.setStyleSheet(f"color: {Colors.TEXT_PRIMARY}; font-size: 14px; font-weight: bold;")
         self.auto_print_chk.setChecked(self.main_window.settings.get('auto_print', False))
         self.auto_print_chk.toggled.connect(self.update_auto_print_setting)
         
@@ -109,8 +108,9 @@ class SettingsPage(BasePage):
         bl.setContentsMargins(30, 30, 30, 30)
         bl.setSpacing(15)
         
-        bl.addWidget(QLabel("النسخ الاحتياطي", styleSheet=f"font-size: 20px; font-weight: 800; color: {Colors.ACCENT}; border-bottom: 1px solid {Colors.ACCENT}; padding-bottom: 5px;"))
-        self.backup_btn = QPushButton("إنشاء نسخة احتياطية الآن")
+        bl.addWidget(QLabel("النسخ الاحتياطي"))
+        self.backup_btn = QPushButton(" إنشاء نسخة احتياطية")
+        self.backup_btn.setIcon(qta.icon("fa5s.database", color="#062C21"))
         self.backup_btn.setObjectName("posButton")
         self.backup_btn.setFixedHeight(50)
         self.backup_btn.clicked.connect(self.main_window.create_manual_backup)
@@ -123,8 +123,9 @@ class SettingsPage(BasePage):
         ul.setContentsMargins(30, 30, 30, 30)
         ul.setSpacing(15)
         
-        ul.addWidget(QLabel("تحديثات النظام", styleSheet=f"font-size: 20px; font-weight: 800; color: {Colors.ACCENT}; border-bottom: 1px solid {Colors.ACCENT}; padding-bottom: 5px;"))
-        self.update_btn = QPushButton("التحقق من الإصدار الجديد")
+        ul.addWidget(QLabel("تحديثات النظام"))
+        self.update_btn = QPushButton(" التحقق من التحديثات")
+        self.update_btn.setIcon(qta.icon("fa5s.sync", color="#062C21"))
         self.update_btn.setObjectName("inventoryButton")
         self.update_btn.setFixedHeight(50)
         self.update_btn.clicked.connect(self.main_window.check_for_updates_action)

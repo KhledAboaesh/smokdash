@@ -21,18 +21,19 @@ class AdvancedReportsDialog(QDialog):
         
         # Header Area
         header_frame = QFrame()
-        header_frame.setStyleSheet(f"background-color: {Colors.SECONDARY_BG}; border-bottom: 2px solid {Colors.ACCENT};")
+        header_frame.setObjectName("headerFrame")
+        header_frame.setObjectName("headerFrame")
         header_layout = QHBoxLayout(header_frame)
         header_layout.setContentsMargins(20, 20, 20, 20)
         
         title_lbl = QLabel("تحليلات الأداء والتقارير")
-        title_lbl.setStyleSheet(f"font-size: 22px; font-weight: 800; color: {Colors.ACCENT}; letter-spacing: 2px;")
+        title_lbl.setObjectName("pageTitle")
         header_layout.addWidget(title_lbl)
         header_layout.addStretch()
         
         close_btn = QPushButton("×")
         close_btn.setFixedSize(30, 30)
-        close_btn.setStyleSheet(f"background: transparent; font-size: 24px; color: {Colors.TEXT_SECONDARY};")
+        close_btn.setObjectName("secondaryButton")
         close_btn.clicked.connect(self.reject)
         header_layout.addWidget(close_btn)
         
@@ -40,23 +41,8 @@ class AdvancedReportsDialog(QDialog):
         
         # Tabs
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet(f"""
-            QTabWidget::pane {{ border: none; background-color: {Colors.BACKGROUND}; }}
-            QTabBar::tab {{
-                background: {Colors.SECONDARY_BG};
-                color: {Colors.TEXT_SECONDARY};
-                padding: 12px 30px;
-                font-size: 14px;
-                font-weight: 600;
-                border: 1px solid {Colors.ACCENT};
-                margin-right: 2px;
-            }}
-            QTabBar::tab:selected {{
-                background: {Colors.ACCENT};
-                color: {Colors.BACKGROUND};
-                border-bottom: None;
-            }}
-        """)
+        self.tabs = QTabWidget()
+        # Removal of local stylesheet to use style.qss
         
         self.daily_tab = self.create_daily_sales_tab()
         self.top_products_tab = self.create_top_products_tab()
@@ -68,7 +54,8 @@ class AdvancedReportsDialog(QDialog):
         
         # Actions Footer
         footer = QFrame()
-        footer.setStyleSheet(f"background-color: {Colors.SECONDARY_BG}; border-top: 1px solid {Colors.BORDER};")
+        footer.setObjectName("footerFrame")
+        footer.setObjectName("footerFrame")
         footer_layout = QHBoxLayout(footer)
         footer_layout.setContentsMargins(20, 15, 20, 15)
         
@@ -88,7 +75,7 @@ class AdvancedReportsDialog(QDialog):
         # Filter Bar
         filters = QFrame()
         filters.setObjectName("statsCard")
-        filters.setStyleSheet(f"QFrame#statsCard {{ background-color: {Colors.SECONDARY_BG}; border: 2px solid {Colors.ACCENT}; border-radius: 0px; }}")
+        filters.setObjectName("statsCard")
         fl = QHBoxLayout(filters)
         
         self.start_date = QDateEdit()

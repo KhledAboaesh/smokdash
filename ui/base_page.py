@@ -22,23 +22,11 @@ class BasePage(QWidget):
         # Content Section with Scroll Area
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
-        self.scroll.setStyleSheet(f"""
-            QScrollArea {{ border: none; background: transparent; }}
-            QScrollBar:vertical {{
-                background-color: {Colors.BACKGROUND};
-                width: 10px;
-                border: none;
-            }}
-            QScrollBar::handle:vertical {{
-                background-color: {Colors.ACCENT};
-                border-radius: 5px;
-                min-height: 20px;
-            }}
-        """)
+        self.scroll.setObjectName("mainScroll")
         
         self.content_area = QWidget()
         self.content_area.setObjectName("contentContainer")
-        self.content_area.setStyleSheet("background: transparent;")
+        self.content_area.setObjectName("contentArea")
         self.content_layout = QVBoxLayout(self.content_area)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setSpacing(15)
@@ -56,10 +44,10 @@ class BasePage(QWidget):
         
         self.title_label = QLabel(title)
         self.title_label.setObjectName("pageTitle")
-        self.title_label.setStyleSheet(f"font-size: 28px; font-weight: 800; color: {Colors.TEXT_PRIMARY};")
+        self.title_label.setObjectName("pageTitle")
         
         self.subtitle_label = QLabel(subtitle)
-        self.subtitle_label.setStyleSheet(f"font-size: 14px; color: {Colors.TEXT_SECONDARY};")
+        self.subtitle_label.setObjectName("subtitleLabel")
         
         header_layout.addWidget(self.title_label)
         header_layout.addWidget(self.subtitle_label)
