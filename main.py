@@ -4,10 +4,10 @@ import json
 from datetime import datetime, timedelta
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QPushButton, QLabel, QStackedWidget,
-                             QFrame, QTableWidget, QTableWidgetItem, QHeaderView,
-                             QDialog, QLineEdit, QFormLayout, QMessageBox, QDoubleSpinBox, QSpinBox,
-                             QInputDialog, QScrollArea, QCheckBox, QProgressBar, QTabWidget, QDateEdit, QComboBox, QMenu,
-                             QToolBar, QStatusBar)
+                             QFrame, QStatusBar, QToolBar, QMessageBox, QScrollArea,
+                             QTableWidget, QTableWidgetItem, QHeaderView,
+                             QDialog, QLineEdit, QFormLayout, QDoubleSpinBox, QSpinBox,
+                             QInputDialog, QCheckBox, QProgressBar, QTabWidget, QDateEdit, QComboBox, QMenu)
 from PySide6.QtCore import Qt, QSize, QTimer, QDate
 from PySide6.QtGui import QColor, QPixmap, QAction
 import qtawesome as qta
@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
         self.setup_ui_shell()
         
         # 4. Routing & Pages
-        self.nav_manager = NavigationManager(self, self.content_stack, self.sidebar_layout)
+        self.nav_manager = NavigationManager(self, self.content_stack, self.nav_buttons_layout)
         start_idx = self.initialize_pages()
         
         # 5. Global Features
@@ -122,10 +122,10 @@ class MainWindow(QMainWindow):
         
         # Brand Logo at Top
         self.logo_img = QLabel()
-        logo_pix = QPixmap(resource_path("logo.png"))
-        self.logo_img.setPixmap(logo_pix.scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        # Initial pixmap, scaling will be handled by resizeEvent
+        self.logo_img.setPixmap(QPixmap(resource_path("logo.png"))) 
         self.logo_img.setAlignment(Qt.AlignCenter)
-        self.logo_img.setContentsMargins(0, 15, 0, 5)
+        self.logo_img.setContentsMargins(0, 20, 0, 10)
         self.sidebar_layout.addWidget(self.logo_img)
         
         self.logo_text = QLabel("SMOKEDASH V3.0")
@@ -153,6 +153,20 @@ class MainWindow(QMainWindow):
         
         self.sidebar_layout.addWidget(self.shift_status_widget)
         self.sidebar_layout.addSpacing(10)
+        
+        # Add scroll area for navigation buttons
+        nav_scroll = QScrollArea()
+        nav_scroll.setWidgetResizable(True)
+        nav_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        nav_scroll.setFrameShape(QFrame.NoFrame)
+        
+        nav_container = QWidget()
+        self.nav_buttons_layout = QVBoxLayout(nav_container)
+        self.nav_buttons_layout.setContentsMargins(0, 0, 0, 0)
+        self.nav_buttons_layout.setSpacing(2)
+        
+        nav_scroll.setWidget(nav_container)
+        self.sidebar_layout.addWidget(nav_scroll, 1) # Give it stretch to fill space
         
         self.main_layout.addWidget(self.sidebar)
         
@@ -530,6 +544,20 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         self.backup_mgr.backup()
         event.accept()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # Dynamic Logo Resizing
+        if hasattr(self, 'logo_img'):
+            sidebar_w = self.sidebar.width()
+            target_w = int(sidebar_w * 0.7) # Logo takes 70% of sidebar width
+            logo_pix = QPixmap(resource_path("logo.png"))
+            if not logo_pix.isNull():
+                self.logo_img.setPixmap(logo_pix.scaled(
+                    target_w, target_w, 
+                    Qt.KeepAspectRatio, 
+                    Qt.SmoothTransformation
+                ))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

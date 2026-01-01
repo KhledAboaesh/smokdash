@@ -17,7 +17,7 @@ class BasePage(QWidget):
         self.main_frame = QFrame()
         self.main_frame.setObjectName("statsCard") # Uses the gold-bordered frame style
         self.main_frame_layout = QVBoxLayout(self.main_frame)
-        self.main_frame_layout.setContentsMargins(20, 20, 20, 20)
+        self.main_frame_layout.setContentsMargins(0, 0, 0, 0) # No padding for scroll container
         
         # Content Section with Scroll Area
         self.scroll = QScrollArea()
@@ -28,7 +28,7 @@ class BasePage(QWidget):
         self.content_area.setObjectName("contentContainer")
         self.content_area.setObjectName("contentArea")
         self.content_layout = QVBoxLayout(self.content_area)
-        self.content_layout.setContentsMargins(0, 0, 0, 0)
+        self.content_layout.setContentsMargins(20, 20, 20, 20) # Add padding inside scroll
         self.content_layout.setSpacing(15)
         
         self.scroll.setWidget(self.content_area)

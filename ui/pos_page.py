@@ -3,7 +3,6 @@ from PySide6.QtCore import Qt, QSize
 import qtawesome as qta
 from ui.base_page import BasePage
 from components.style_engine import Colors, StyleEngine
-from components.numpad_widget import NumpadWidget
 
 class POSPage(BasePage):
     def __init__(self, main_window):
@@ -14,12 +13,12 @@ class POSPage(BasePage):
 
     def setup_ui(self):
         main_h_layout = QHBoxLayout()
-        main_h_layout.setSpacing(15)
+        main_h_layout.setSpacing(25) # Increase spacing for Elite feel
         
         # --- COLUMN 1: Product Selection (Largest) ---
         col1 = QFrame()
         col1_layout = QVBoxLayout(col1)
-        col1_layout.setContentsMargins(0, 0, 0, 0)
+        col1_layout.setContentsMargins(10, 10, 10, 10)
         
         search_box = QHBoxLayout()
         self.search_input = QLineEdit()
@@ -92,15 +91,7 @@ class POSPage(BasePage):
         pay_grid.addWidget(self.debt_btn, 1, 0)
         pay_grid.addWidget(self.clear_btn, 1, 1)
         col3_layout.addLayout(pay_grid)
-        
-        col3_layout.addSpacing(10)
-        
-        # Compact Numpad
-        self.numpad = NumpadWidget()
-        self.numpad.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        self.numpad.digit_pressed.connect(self._on_numpad_digit)
-        self.numpad.action_pressed.connect(self._on_numpad_action)
-        col3_layout.addWidget(self.numpad)
+        col3_layout.addStretch() # Push buttons to top
         
         main_h_layout.addWidget(col3, 2)
         
@@ -109,26 +100,4 @@ class POSPage(BasePage):
     def refresh(self):
         # We'll call the search method which populates the table
         pass
-
-    def _on_numpad_digit(self, digit):
-        # If search input has focus, type there
-        if self.search_input.hasFocus():
-            self.search_input.insert(digit)
-        else:
-            # Otherwise assume quantity or general input (can be expanded)
-            self.search_input.setFocus()
-            self.search_input.insert(digit)
-
-    def _on_numpad_action(self, action):
-        if action == 'clear':
-            self.search_input.clear()
-        elif action == 'backspace':
-            self.search_input.backspace()
-        elif action == 'enter':
-            # Trigger search or add if only one product
-            # For now, let's keep it simple: if there's a selected item in products table, add it
-            items = self.products_table.selectedItems()
-            if items:
-                self.main_window.add_to_cart(items[0])
-            else:
-                self.main_window.search_pos_products()
+        pass
