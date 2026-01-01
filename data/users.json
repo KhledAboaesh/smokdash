@@ -27,5 +27,17 @@
             "pos",
             "customers"
         ]
+    },
+    {
+        "username": "kh",
+        "full_name": "",
+        "phone": "091",
+        "role": "cashier",
+        "password": "123",
+        "permissions": [
+            "pos",
+            "invoices",
+            "customers"
+        ]
     }
 ]
